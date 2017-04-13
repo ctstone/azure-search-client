@@ -1,0 +1,32 @@
+{
+  "name": "azure-search-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "tsc": "tsc",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "bump": "npm version patch -m \"Bump to %s ***NO_CI***\" ",
+    "bump:push": "git push origin HEAD:%BUILD_SOURCEBRANCH% && git push --tags",
+    "release:local": "npm pack",
+    "preversion": "git config user.name CI && git config user.email %npm_package_author_name%"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.3.0",
+    "lodash": "^4.17.4",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {
+    "@types/async": "^2.0.40",
+    "@types/lodash": "^4.14.62",
+    "@types/nock": "^8.2.1",
+    "@types/request": "0.0.42",
+    "nock": "^9.0.13",
+    "typescript": "^2.2.2"
+  }
+}
