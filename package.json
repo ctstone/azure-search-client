@@ -1,6 +1,5 @@
 {
   "name": "azure-search-client",
-  "version": "1.0.3-alpha.1",
   "description": "Client for Azure Search",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
