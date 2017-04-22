@@ -28,19 +28,19 @@ export class SearchClient {
     });
   }
 
-  search(indexName: string, options: QueryOptions, callback: SearchCallback): void {
+  search(indexName: string, options: QueryOptions, callback: SearchCallback<SearchResult>): void {
     this.request.post(`indexes/${indexName}/docs/search`, { body: options || {} }, this.onResponse(callback));
   }
 
-  createIndex(schema: any, callback: SearchCallback): void {
+  createIndex(schema: any, callback: SearchCallback<any>): void {
     this.request.post('indexes', { body: schema }, this.onResponse(callback));
   }
 
-  createDatasource(datasource: any, callback: SearchCallback): void {
+  createDatasource(datasource: any, callback: SearchCallback<any>): void {
     this.request.post('datasources', { body: datasource }, this.onResponse(callback));
   }
 
-  private onResponse(callback: SearchCallback): ResponseCallback {
+  private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
       callback(err, err ? null : {
         properties: _.pick<SearchResponseProperties, any>(response.headers, RESPONSE_PROPERTIES),

@@ -8,10 +8,10 @@ export interface SearchResponseProperties {
   'etag'?: string;
 }
 
-export interface SearchResponse {
-  result?: SearchResult;
+export interface SearchResponse<T> {
+  result?: T;
   statusCode: number;
   properties: SearchResponseProperties;
 }
 
-export type SearchCallback = (err: Error, response: SearchResponse) => void;
+export type SearchCallback<T> = (err: Error, response: SearchResponse<T>) => void;
