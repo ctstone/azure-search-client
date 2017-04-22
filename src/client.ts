@@ -8,12 +8,12 @@ const API_VERSION = '2016-09-01';
 
 const RESPONSE_PROPERTIES = [
   'client-request-id',
-  'Content-Type',
-  'Location',
-  'OData-Version',
+  'content-type',
+  'location',
+  'odata-version',
   'request-id',
   'elapsed-time',
-  'ETag',
+  'etag',
 ];
 
 export class SearchClient {
@@ -29,7 +29,7 @@ export class SearchClient {
   }
 
   search(indexName: string, options: QueryOptions, callback: SearchCallback): void {
-    this.request.post(`indexes/${indexName}/docs/search`, { body: options }, this.onResponse(callback));
+    this.request.post(`indexes/${indexName}/docs/search`, { body: options || {} }, this.onResponse(callback));
   }
 
   createIndex(schema: any, callback: SearchCallback): void {
