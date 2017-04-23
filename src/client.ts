@@ -40,6 +40,10 @@ export class SearchClient {
     this.request.post('datasources', { body: datasource }, this.onResponse(callback));
   }
 
+  createIndexer(indexer: any, callback: SearchCallback<any>): void {
+    this.request.post('indexers', { body: indexer }, this.onResponse(callback));
+  }
+
   private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
       callback(err, err ? null : {
