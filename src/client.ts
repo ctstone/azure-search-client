@@ -46,11 +46,11 @@ export class SearchClient {
 
   private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
-      callback(err, err ? null : {
+      callback(err, response ? {
         properties: _.pick<SearchResponseProperties, any>(response.headers, RESPONSE_PROPERTIES),
         result: response.body,
         statusCode: response.statusCode,
-      });
+      } : null);
     };
   }
 }
