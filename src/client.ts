@@ -45,7 +45,7 @@ export class SearchClient {
   }
 
   runIndexer(indexer: string, callback: SearchCallback<any>): void {
-    this.request.post(`indexers/${indexer}`, null, this.onResponse(callback));
+    this.request.post(`indexers/${indexer}/run`, null, this.onResponse(callback));
   }
 
   private onResponse(callback: SearchCallback<any>): ResponseCallback {

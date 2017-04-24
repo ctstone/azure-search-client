@@ -37,7 +37,7 @@ export class Request {
           const message = resp.headers['content-type'].startsWith('application/json')
             ? JSON.stringify(body)
             : `Request returned HTTP ${resp.statusCode}`;
-          setImmediate(next, new Error(message), null); // TODO retry with backoff
+          setImmediate(next, new Error(message), resp); // TODO retry with backoff
         } else {
           setImmediate(next, null, resp);
         }
