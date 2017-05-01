@@ -19,6 +19,7 @@
   "dependencies": {
     "async": "^2.3.0",
     "lodash": "^4.17.4",
+    "nock": "^9.0.13",
     "request": "^2.81.0"
   },
   "devDependencies": {
@@ -26,7 +27,6 @@
     "@types/lodash": "^4.14.62",
     "@types/nock": "^8.2.1",
     "@types/request": "0.0.42",
-    "nock": "^9.0.13",
     "typescript": "^2.2.2"
   }
 }
