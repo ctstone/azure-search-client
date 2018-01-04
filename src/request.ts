@@ -1,5 +1,5 @@
-import request = require('request');
 import async = require('async');
+import request = require('request');
 
 export type Response = request.RequestResponse;
 export type ResponseCallback = (err: Error, response: request.RequestResponse) => void;

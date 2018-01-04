@@ -1,5 +1,5 @@
-import _ = require('lodash');
 import async = require('async');
+import _ = require('lodash');
 import { Request, Response, ResponseCallback } from './request';
 import { SearchCallback, SearchResponseProperties } from './types/response';
 import { QueryOptions, SearchResult } from './types/search';
@@ -55,7 +55,7 @@ export class SearchClient {
   private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
       callback(err, response ? {
-        properties: _.pick<SearchResponseProperties, any>(response.headers, RESPONSE_PROPERTIES),
+        properties: _.pick(response.headers, RESPONSE_PROPERTIES) as SearchResponseProperties,
         result: response.body,
         statusCode: response.statusCode,
       } : null);

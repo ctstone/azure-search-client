@@ -17,16 +17,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "async": "^2.3.0",
+    "async": "^2.6.0",
     "lodash": "^4.17.4",
-    "nock": "^9.0.13",
-    "request": "^2.81.0"
+    "nock": "^9.1.5",
+    "request": "^2.83.0"
   },
   "devDependencies": {
-    "@types/async": "^2.0.40",
-    "@types/lodash": "^4.14.62",
+    "@types/async": "^2.0.46",
+    "@types/lodash": "^4.14.91",
     "@types/nock": "^8.2.1",
     "@types/request": "0.0.42",
-    "typescript": "^2.2.2"
+    "tslint": "^5.8.0",
+    "typescript": "^2.6.2"
   }
 }
