@@ -55,10 +55,20 @@ export class SearchClient {
   private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
       callback(err, response ? {
-        properties: _.pick(response.headers, RESPONSE_PROPERTIES) as SearchResponseProperties,
+        properties: this.pick<SearchResponseProperties>(response.headers, RESPONSE_PROPERTIES),
         result: response.body,
         statusCode: response.statusCode,
       } : null);
     };
+  }
+
+  private pick<T>(source: any, keys: string[]): T {
+    const obj: T = {} as T;
+    keys.forEach((k) => {
+      if (source.hasOwnProperty(k)) {
+        obj[k] = source[k];
+      }
+    });
+    return obj;
   }
 }
