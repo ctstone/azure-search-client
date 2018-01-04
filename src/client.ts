@@ -48,6 +48,10 @@ export class SearchClient {
     this.request.post(`indexers/${indexer}/run`, null, this.onResponse(callback));
   }
 
+  listIndexes(callback: SearchCallback<any>): void {
+    this.request.get(`indexes`, null, this.onResponse(callback));
+  }
+
   private onResponse(callback: SearchCallback<any>): ResponseCallback {
     return (err: Error, response: Response) => {
       callback(err, response ? {
