@@ -2,7 +2,7 @@ import { Indexes } from ".";
 import { jsonParser } from "../parsers";
 import { SearchRequester } from "../search-requester";
 import { SearchResource } from "../search-resource";
-import { AzureSearchResponse, ListOptions, SearchOptions } from '../types';
+import { AzureSearchResponse, ListOptions, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
 import {
   AnalyzeQuery,
   AnalyzeResults,
@@ -61,48 +61,52 @@ export class SearchIndex extends SearchResource<IndexSchema> {
   /**
    * Execute a search query
    * @param query query to execute
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  search<T>(query: Query, options?: SearchOptions) {
+  search<T>(query: Query, optionsOrCallback?: OptionsOrCallback<SearchResults<T>>, callback?: SearchCallback<SearchResults<T>>) {
     return this.request<SearchResults<T>>({
       method: 'post',
       path: '/docs/search',
       body: query,
-    }, options) as Promise<SearchResponse<T>>;
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Execute a suggestions search query
    * @param query query to execute
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  suggest<T>(query: SuggestQuery, options?: SearchOptions) {
+  suggest<T>(query: SuggestQuery, optionsOrCallback?: OptionsOrCallback<SuggestResults<T>>, callback?: SearchCallback<SuggestResults<T>>) {
     return this.request<SuggestResults<T>>({
       method: 'post',
       path: '/docs/suggest',
       body: query,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Perform indexing analysis on text
    * @param query query to execute
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  analyze(query: AnalyzeQuery, options?: SearchOptions) {
+  analyze(query: AnalyzeQuery, optionsOrCallback?: OptionsOrCallback<AnalyzeResults>, callback?: SearchCallback<AnalyzeResults>) {
     return this.request<AnalyzeResults>({
       method: 'post',
       path: '/analyze',
       body: query,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Add, remove, or update documents in the search index. This function handles batching of content to fit within indexing request limits.
    * @param documents documents to index
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  async index(documents: IndexDocument[], options?: SearchOptions) {
+  async index(documents: IndexDocument[], options: SearchOptions) {
     const buffer: IndexingBuffer = { data: [], bytes: 0, position: 0, count: 0 };
     const comma = Buffer.from(',');
     const open = Buffer.from('{"value":[');
@@ -151,39 +155,44 @@ export class SearchIndex extends SearchResource<IndexSchema> {
     return results;
   }
 
+  // TODO implement callback style index()?
+
   /**
    * Get document count and usage for the current index
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  statistics(options?: SearchOptions) {
+  statistics(optionsOrCallback?: OptionsOrCallback<IndexStatistics>, callback?: SearchCallback<IndexStatistics>) {
     return this.request<IndexStatistics>({
       method: 'get',
       path: '/stats',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Retrieve a single document from the current index
    * @param key document key
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  lookup(key: string, options?: SearchOptions & ListOptions) {
+  lookup(key: string, optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<Document>, callback?: SearchCallback<Document>) {
     return this.request<Document>({
       method: 'get',
       path: `/docs/${key}`,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Retrieve a count of the number of documents in a search index
-   * @param options optional search options
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  count(options?: SearchOptions) {
+  count(optionsOrCallback?: OptionsOrCallback<number>, callback?: SearchCallback<number>) {
     return this.request<number>({
       method: 'get',
       path: '/docs/$count',
       headers: { accept: 'text/plain' },
       parser: jsonParser,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 }

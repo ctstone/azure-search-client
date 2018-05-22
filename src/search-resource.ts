@@ -1,6 +1,6 @@
 import { SearchRequester } from './search-requester';
 import { SearchResourceGroup } from './search-resource-group';
-import { AzureSearchResponse, SearchOptions, SearchRequest } from './types';
+import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
 /**
  * Base class for search resources
@@ -17,28 +17,30 @@ export abstract class SearchResource<T> {
 
   /**
    * Get the current schema
-   * @param options optional request parameters
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  get(options?: SearchOptions) {
+  get(optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>) {
     return this.request<T>({
       method: 'get',
       path: '/',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Delete this resource
-   * @param options optional request parameters
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  delete(options?: SearchOptions) {
+  delete(optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'delete',
       path: '/',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
-  protected request<T>(req: SearchRequest<T>, options: SearchOptions) {
+  protected request<T>(req: SearchRequest<T>, optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>) {
     req.path = `/${this.type}/${this.name}${req.path}`;
-    return this.requester.request<T>(req, options);
+    return this.requester.request<T>(req, optionsOrCallback, callback);
   }
 }

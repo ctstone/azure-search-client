@@ -18,7 +18,6 @@ export interface SearchRequest<T> {
   query?: { [key: string]: string };
   body?: any;
   parser?: Parser;
-  callback?: SearchCallback<T>;
 }
 
 export interface AzureSearchResponse<T> {
@@ -47,7 +46,7 @@ export interface ListResults<T> {
 }
 
 export interface ListOptions {
-  $select: string;
+  $select?: string;
 }
 
 export interface ServiceCounter {
@@ -73,6 +72,7 @@ export interface ServiceStatisticsResult {
 }
 
 export type SearchCallback<T> = (err: Error, resp: AzureSearchResponse<T>) => void;
+export type OptionsOrCallback<T> = SearchOptions | SearchCallback<T>;
 export type ErrorCallback = (err: Error) => void;
 export type ResponseCallback = (resp: any) => void;
 export type RequestCallback = (req: any) => void;

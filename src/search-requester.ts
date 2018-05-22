@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import * as request from 'superagent';
-import { AzureSearchResponse, SearchOptions, SearchRequest, SearchTimer } from './types';
+import { AzureSearchResponse, SearchOptions, SearchRequest, SearchTimer, SearchCallback, OptionsOrCallback } from './types';
 
 const handleError = (err: any) => {
   if (err.response && err.response.body) {
@@ -65,7 +65,8 @@ export class SearchRequester {
     this.adminKeys = Array.isArray(adminKey) ? adminKey : [adminKey];
   }
 
-  request<T>(req: SearchRequest<T>, options?: SearchOptions): Promise<AzureSearchResponse<T>> {
+  request<T>(req: SearchRequest<T>, optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>): Promise<AzureSearchResponse<T>> {
+    const [options, cb] = this.getParams(optionsOrCallback, callback);
     const events = this.events;
     const headers = Object.assign({
       'api-key': options && options.key ? options.key : this.adminKeys[0],
@@ -98,10 +99,18 @@ export class SearchRequester {
       });
     this.events.emit('request', { request: req, options });
 
-    if (req.callback) {
-      handleCallback<T>(val, req.callback, timer);
+    if (cb) {
+      handleCallback<T>(val, cb, timer);
     } else {
       return handlePromise<T>(val, timer);
+    }
+  }
+
+  private getParams<T>(optionsOrCallback?: SearchOptions | SearchCallback<T>, callback?: SearchCallback<T>): [SearchOptions, SearchCallback<T>] {
+    if (typeof optionsOrCallback === 'function') {
+      return [{}, optionsOrCallback];
+    } else {
+      return [optionsOrCallback || {}, callback];
     }
   }
 }

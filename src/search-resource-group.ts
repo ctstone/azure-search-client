@@ -1,6 +1,6 @@
 import { SearchRequester } from './search-requester';
 import { SearchResource } from './search-resource';
-import { AzureSearchResponse, ListOptions, ListResults, SearchOptions, SearchRequest } from './types';
+import { AzureSearchResponse, ListOptions, ListResults, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
 export type Resource<T extends SearchResource<TSchema>, TSchema>
   = new (requester: SearchRequester, type: string, name: string) => T;
@@ -31,39 +31,43 @@ export abstract class SearchResourceGroup<TResource extends SearchResource<TSche
   /**
    * Create a new resource
    * @param schema resource definition
-   * @param options optional request parameters
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  create(schema: TSchema, options?: SearchOptions) {
+  create(schema: TSchema, optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'post',
       path: '/',
       body: schema,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Update a resource
    * @param schema resource definition
-   * @param options optional request parameters
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  update(schema: TSchema, options?: SearchOptions) {
-    return this.create(schema, options);
+  update(schema: TSchema, optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
+    return this.create(schema, optionsOrCallback, callback);
   }
 
   /**
    * List all instances
-   * @param options optional request parameters
+   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
+   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
    */
-  list(options?: SearchOptions & ListOptions) {
+  list(optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<ListResults<TSchema>>, callback?: SearchCallback<ListResults<TSchema>>) {
+    const options: SearchOptions & ListOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback;
     return this.request<ListResults<TSchema>>({
       method: 'get',
       path: '/',
       query: options ? { $select: options.$select } : null,
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
-  private request<T>(req: SearchRequest<T>, options: SearchOptions) {
+  private request<T>(req: SearchRequest<T>, optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>) {
     req.path = `/${this.type}${req.path}`;
-    return this.requester.request<T>(req, options);
+    return this.requester.request<T>(req, optionsOrCallback);
   }
 }

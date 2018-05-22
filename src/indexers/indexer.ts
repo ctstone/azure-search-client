@@ -1,7 +1,7 @@
 import { Indexers } from '.';
 import { SearchRequester } from '../search-requester';
 import { SearchResource } from '../search-resource';
-import { AzureSearchResponse, SearchOptions } from '../types';
+import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
 import { IndexerSchema, IndexerStatusResult } from './types';
 
 export { IndexerStatusResult, IndexerSchema };
@@ -25,32 +25,32 @@ export class Indexer extends SearchResource<IndexerSchema> {
    * Run the current indexer
    * @param options optional search options
    */
-  run(options?: SearchOptions) {
+  run(optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'post',
       path: '/run',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Get status for the current indexer
    * @param options optional search options
    */
-  status(options?: SearchOptions) {
+  status(optionsOrCallback?: OptionsOrCallback<IndexerStatusResult>, callback?: SearchCallback<IndexerStatusResult>) {
     return this.request<IndexerStatusResult>({
       method: 'get',
       path: '/status',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 
   /**
    * Reset tracking state for the current indexer
    * @param options optional search options
    */
-  reset(options?: SearchOptions) {
+  reset(optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'post',
       path: '/reset',
-    }, options);
+    }, optionsOrCallback, callback);
   }
 }
