@@ -5,29 +5,19 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "tsc": "tsc",
     "build": "tsc",
-    "watch": "tsc -w",
-    "bump": "npm version patch -m \"Bump to %s ***NO_CI***\" ",
-    "bump:push": "git push origin HEAD:%BUILD_SOURCEBRANCH% && git push --tags",
-    "release:local": "npm pack",
-    "preversion": "git config user.name CI && git config user.email %npm_package_author_name%"
+    "watch": "tsc -w"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "async": "^2.6.0",
-    "lodash": "^4.17.4",
-    "nock": "^9.1.5",
-    "request": "^2.83.0"
+    "@types/node": "^10.1.2",
+    "superagent": "^3.8.3"
   },
   "devDependencies": {
-    "@types/async": "^2.0.46",
-    "@types/lodash": "^4.14.91",
-    "@types/nock": "^8.2.1",
-    "@types/request": "0.0.42",
-    "tslint": "^5.8.0",
-    "typescript": "^2.6.2"
+    "@types/superagent": "^3.5.8",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3"
   }
 }
