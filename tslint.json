@@ -7,6 +7,7 @@
     "no-shadowed-variable": false,
     "interface-name": [ false ],
     "no-console": [ false ],
-    "no-conditional-assignment": false
+    "no-conditional-assignment": false,
+    "object-literal-sort-keys": false
   }
 }
