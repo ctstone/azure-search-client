@@ -1,7 +1,2 @@
 node_modules
 dist
-src/environment.json
-.vscode
-log
-*.log
-*.tgz
