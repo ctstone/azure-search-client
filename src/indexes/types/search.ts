@@ -67,4 +67,8 @@ export interface SearchResults<T> extends ListResults<T & SearchDocument> {
 export interface SearchResponse<T> extends AzureSearchResponse<SearchResults<T>> {
 }
 
+export interface DocumentParseOptions {
+  parseDates?: boolean;
+}
+
 export type FieldValue = string | number | boolean | string[] | GeoJSON | any;

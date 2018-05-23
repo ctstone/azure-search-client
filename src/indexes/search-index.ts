@@ -7,6 +7,7 @@ import {
   AnalyzeQuery,
   AnalyzeResults,
   Document,
+  DocumentParseOptions,
   IndexDocument,
   IndexingResult,
   IndexingResults,
@@ -36,6 +37,7 @@ export {
 
 const MAX_INDEXING_BYTES = 16 * Math.pow(2, 20);
 const MAX_INDEXING_COUNT = 1000;
+const RE_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 
 interface IndexingBuffer {
   data: Buffer[];
@@ -53,18 +55,18 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param query query to execute
    * @param options optional request options
    */
-  search<T>(query: Query, options?: SearchOptions): Promise<SearchResponse<T>>;
+  search<T>(query: Query, options?: SearchOptions & DocumentParseOptions): Promise<SearchResponse<T>>;
   search<T>(query: Query, callback: SearchCallback<SearchResults<T>>): void;
-  search<T>(query: Query, options: SearchOptions, callback: SearchCallback<SearchResults<T>>): void;
+  search<T>(query: Query, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SearchResults<T>>): void;
 
   /**
    * Execute a suggest query
    * @param query query to execute
    * @param options optional request options
    */
-  suggest<T>(query: SuggestQuery, options?: SearchOptions): Promise<SuggestResponse<T>>;
+  suggest<T>(query: SuggestQuery, options?: SearchOptions & DocumentParseOptions): Promise<SuggestResponse<T>>;
   suggest<T>(query: SuggestQuery, callback: SearchCallback<SuggestResults<T>>): void;
-  suggest<T>(query: SuggestQuery, options: SearchOptions, callback: SearchCallback<SuggestResults<T>>): void;
+  suggest<T>(query: SuggestQuery, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SuggestResults<T>>): void;
 
   /**
    * Perform indexing analysis on text
@@ -120,19 +122,39 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     super(requester, type, name);
   }
 
-  search<T>(query: Query, optionsOrCallback?: OptionsOrCallback<SearchResults<T>>, callback?: SearchCallback<SearchResults<T>>) {
+  search<T>(query: Query, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SearchResults<T>>, callback?: SearchCallback<SearchResults<T>>) {
+    const options: SearchOptions & DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
+    if (options.parseDates === undefined) {
+      options.parseDates = true;
+    }
     return this.request<SearchResults<T>>({
       method: 'post',
       path: '/docs/search',
       body: query,
+      parser: jsonParser((key, value) => {
+        if (options.parseDates && typeof value === 'string' && RE_DATE.test(value)) {
+          value = new Date(value);
+        }
+        return value;
+      }),
     }, optionsOrCallback, callback);
   }
 
-  suggest<T>(query: SuggestQuery, optionsOrCallback?: OptionsOrCallback<SuggestResults<T>>, callback?: SearchCallback<SuggestResults<T>>) {
+  suggest<T>(query: SuggestQuery, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SuggestResults<T>>, callback?: SearchCallback<SuggestResults<T>>) {
+    const options: DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
+    if (options.parseDates === undefined) {
+      options.parseDates = true;
+    }
     return this.request<SuggestResults<T>>({
       method: 'post',
       path: '/docs/suggest',
       body: query,
+      parser: jsonParser((key, value) => {
+        if (options.parseDates && typeof value === 'string' && RE_DATE.test(value)) {
+          value = new Date(value);
+        }
+        return value;
+      }),
     }, optionsOrCallback, callback);
   }
 
@@ -202,10 +224,20 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  lookup<T>(key: string, optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<Document & T>, callback?: SearchCallback<Document & T>) {
+  lookup<T>(key: string, optionsOrCallback?: (SearchOptions & ListOptions & DocumentParseOptions) | SearchCallback<Document & T>, callback?: SearchCallback<Document & T>) {
+    const options: DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
+    if (options.parseDates === undefined) {
+      options.parseDates = true;
+    }
     return this.request<Document>({
       method: 'get',
       path: `/docs/${key}`,
+      parser: jsonParser((key, value) => {
+        if (options.parseDates && typeof value === 'string' && RE_DATE.test(value)) {
+          value = new Date(value);
+        }
+        return value;
+      }),
     }, optionsOrCallback, callback);
   }
 
@@ -214,7 +246,7 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
       method: 'get',
       path: '/docs/$count',
       headers: { accept: 'text/plain' },
-      parser: jsonParser,
+      parser: jsonParser(),
     }, optionsOrCallback, callback);
   }
 }

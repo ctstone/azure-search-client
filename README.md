@@ -6,7 +6,7 @@ npm install azure-search-client
 ## Usage
 
 ### Basic query (async/await)
-Responses may be retrieved using `async/await` pattern:
+Responses may be retrieved using the `async/await` pattern:
 
 ```JavaScript
 const { SearchService } = require('azure-search-client');
@@ -92,8 +92,10 @@ client.indexes.use('myIndex').search(new QueryBuilder()
   .query);
 ```
 
-### Request options
-You can set any optional request-specific options for any request:
+> Strongly typed versions of these utilites are also available. See [TypeScript Generics](#typescript-generics)
+
+### Options
+You can set optional request-specific options for any request:
 
 ```JavaScript
 client.indexes.use('myIndex').search({
@@ -110,10 +112,32 @@ client.indexes.use('myIndex').search({
 });
 ```
 
-You can also set the default API version for your client:
+---
+
+You can set the default API version for your client:
 
 ```JavaScript
 const client = new SearchService('myService', 'myKey', 'myDefaultApiVersion');
+```
+
+---
+
+JSON has no date representation, so Azure Search returns `Date` fields as strings. The search client will automatically parse any string value that looks like a date. You can disable automatic date parsing in the request options:
+
+```JavaScript
+client.indexes.use('myIndex').search({
+  search: 'hello world',
+}, {
+  parseDates: false,
+});
+```
+
+---
+
+Any resource group with a `list()` function accepts an optional `$select` property to limit the fields that are fetched:
+
+```JavaScript
+client.indexes.list({ $select: 'name' });
 ```
 
 ### Response properties
@@ -220,6 +244,8 @@ await index.suggest({
 });
 ```
 
+> Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates. To disable this, reference the [parseDate option](#options)
+
 ---
 
 ### Manage Data Sources
@@ -305,3 +331,33 @@ const doc = resp.result.value[0];
 `doc` is typed as `MyDoc & SearchDocument`, giving you first class access to `id` and `num` properties, as well as `@search.score` and `@search.highlights`.
 
 Use your own Document types wherever documents are used: indexing, search, suggest.
+
+---
+
+To ensure type safety when using the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities, switch to their typed equivilents (`TypedQueryBuilder<TDocument>`, `TypedQueryFilter<TDocument>`, and `TypedFacetBuilder<TDocument>`). These classes are strongly typed to ensure that field names and values correspond with the actual properties of your document model:
+
+```TypeScript
+interface MyDoc {
+  id: string;
+  num: number;
+  date: Date;
+  content: string;
+}
+
+new TypedQueryBuilder<MyDoc>()
+    .searchFields('content') // ok
+    .facet('num') // ok
+
+    // following will cause compile errors since 'blah' and 'foo' are not part of the document model
+    .facet(new TypedFacetBuilder<MyDoc>('blah').count(100))
+    .select('id', 'foo')
+    .highlight('foo')
+    .orderbyAsc('foo');
+
+new TypedQueryFilter<MyDoc>()
+  .eq('id', 'foo') // ok
+  .lt('date', new Date()) // ok
+  .eq('num', 'not a number'); // compile failure: string is not assignable to number field
+```
+
+The typed utilities are interchangable with their non-typed counterparts. Use them to catch simple field name typos early.
