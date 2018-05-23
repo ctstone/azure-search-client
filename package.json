@@ -8,8 +8,12 @@
     "build": "tsc",
     "watch": "tsc -w"
   },
-  "keywords": [],
-  "author": "",
+  "repository": {
+    "url": "https://github.com/ctstone/azure-search-client",
+    "type": "git"
+  },
+  "keywords": ["azure search"],
+  "author": "chstone@microsoft.com",
   "license": "MIT",
   "dependencies": {
     "superagent": "^3.8.3"
