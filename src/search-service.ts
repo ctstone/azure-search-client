@@ -1,26 +1,36 @@
-import { DataSources } from './data-sources';
-import { Indexers } from './indexers';
-import { Indexes } from './indexes';
+import { DataSources, IDataSources } from './data-sources';
+import { IIndexers, Indexers } from './indexers';
+import { IIndexes, Indexes } from './indexes';
 import { SearchRequester } from './search-requester';
-import { SynonymMaps } from './synonym-maps';
-import { AzureSearchResponse, ErrorCallback, RequestCallback, ResponseCallback, SearchOptions, ServiceStatisticsResult } from './types';
+import { ISynonymMaps, SynonymMaps } from './synonym-maps';
+import { AzureSearchResponse, ErrorCallback, RequestCallback, ResponseCallback, SearchOptions, ServiceStatisticsResult, SearchCallback, OptionsOrCallback } from './types';
 
 const DEFAULT_VERSION = '2017-11-11';
 
+export interface ISearchService {
+  /**
+   * Get service level usage statistics
+   * @param options optional request options
+   */
+  statistics(options?: SearchOptions): Promise<AzureSearchResponse<ServiceStatisticsResult>>;
+  statistics(callback: SearchCallback<ServiceStatisticsResult>): void;
+  statistics(options: SearchOptions, callback: SearchCallback<ServiceStatisticsResult>): void;
+}
+
 /** Azure Search service */
-export class SearchService {
+export class SearchService implements ISearchService {
 
   /** Access data sources for the current Azure Search service */
-  dataSources: DataSources;
+  dataSources: IDataSources;
 
   /** Access indexers for the current Azure Search service */
-  indexers: Indexers;
+  indexers: IIndexers;
 
   /** Access indexes for the current Azure Search service */
-  indexes: Indexes;
+  indexes: IIndexes;
 
   /** Access synonym maps for the current Azure Search service */
-  synonymMaps: SynonymMaps;
+  synonymMaps: ISynonymMaps;
 
   private requester: SearchRequester;
 
@@ -56,14 +66,10 @@ export class SearchService {
     this.requester.events.removeListener(type, listener);
   }
 
-  /**
-   * Get usage and limits for the current service
-   * @param options optional request parameters
-   */
-  statistics(options?: SearchOptions) {
+  statistics(optionsOrCallback?: OptionsOrCallback<ServiceStatisticsResult>, callback?: SearchCallback<ServiceStatisticsResult>) {
     return this.requester.request<ServiceStatisticsResult>({
       method: 'get',
       path: '/servicestats',
-    });
+    }, optionsOrCallback, callback);
   }
 }

@@ -1,12 +1,15 @@
 import { EventEmitter } from 'events';
 import * as request from 'superagent';
-import { AzureSearchResponse, SearchOptions, SearchRequest, SearchTimer, SearchCallback, OptionsOrCallback } from './types';
+import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest, SearchTimer } from './types';
 
 const handleError = (err: any) => {
   if (err.response && err.response.body) {
     const body = err.response.body;
+    const url = err.response.request.url;
+    const method = err.response.request.method.toUpperCase();
+    const status = err.response.status;
     if (body.error && body.error.message) {
-      throw new Error(`Azure Search Error ${err.response.status}: ${body.error.message}`);
+      throw new Error(`Cannot ${method} ${url} (${status}): ${body.error.message}`);
     }
   }
   throw err;
@@ -92,7 +95,9 @@ export class SearchRequester {
       })
       .on('error', (err) => {
         timer.end = process.hrtime(timer.end);
-        this.events.emit('error', err);
+        if (this.events.listenerCount('error')) {
+          this.events.emit('error', err);
+        }
       })
       .on('end', (err) => {
         timer.end = process.hrtime(timer.end);

@@ -1,12 +1,15 @@
 import { SearchRequester } from '../search-requester';
-import { SearchResourceGroup } from '../search-resource-group';
-import { SearchIndex } from './search-index';
+import { IResourceGroup, SearchResourceGroup } from '../search-resource-group';
+import { ISearchIndex, SearchIndex } from './search-index';
 import { IndexSchema } from './types';
 
 export * from './search-index';
 
+export interface IIndexes extends IResourceGroup<IndexSchema, ISearchIndex> {
+}
+
 /** Manage an Azure Search index resource */
-export class Indexes extends SearchResourceGroup<SearchIndex, IndexSchema> {
+export class Indexes extends SearchResourceGroup<SearchIndex, IndexSchema, ISearchIndex> implements IIndexes {
 
   /**
    * Manage an Azure Search index resource

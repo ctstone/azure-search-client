@@ -2,10 +2,29 @@ import { SearchRequester } from './search-requester';
 import { SearchResourceGroup } from './search-resource-group';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
+export interface ISearchResource<T> {
+
+  /**
+   * Get the current schema
+   * @param options optional request options
+   */
+  get(options?: SearchOptions): Promise<AzureSearchResponse<T>>;
+  get(callback: SearchCallback<T>): void;
+  get(options: SearchOptions, callback: SearchCallback<T>): void;
+
+  /**
+   * Delete this resource
+   * @param options optional request options
+   */
+  delete(options?: SearchOptions): Promise<AzureSearchResponse<void>>;
+  delete(callback: SearchCallback<void>): void;
+  delete(options: SearchOptions, callback: SearchCallback<void>): void;
+}
+
 /**
  * Base class for search resources
  */
-export abstract class SearchResource<T> {
+export abstract class SearchResource<T> implements ISearchResource<T> {
 
   /**
    * Create new instance of the search resource
@@ -15,11 +34,6 @@ export abstract class SearchResource<T> {
    */
   constructor(private requester: SearchRequester, private type: string, public name: string) { }
 
-  /**
-   * Get the current schema
-   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
-   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
-   */
   get(optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>) {
     return this.request<T>({
       method: 'get',
@@ -27,11 +41,6 @@ export abstract class SearchResource<T> {
     }, optionsOrCallback, callback);
   }
 
-  /**
-   * Delete this resource
-   * @param optionsOrCallback Either options or a callback. If no callback is supplied, the request should be handled as a promise.
-   * @param callback Callback when done. If no callback is supplied, the request should be handled as a promise.
-   */
   delete(optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'delete',

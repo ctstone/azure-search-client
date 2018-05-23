@@ -1,15 +1,29 @@
 import { Indexers } from '.';
 import { SearchRequester } from '../search-requester';
-import { SearchResource } from '../search-resource';
+import { ISearchResource, SearchResource } from '../search-resource';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
 import { IndexerSchema, IndexerStatusResult } from './types';
 
 export { IndexerStatusResult, IndexerSchema };
 
+export interface IIndexer extends ISearchResource<IndexerSchema> {
+  run(options?: SearchOptions): Promise<AzureSearchResponse<void>>;
+  run(callback: SearchCallback<void>): void;
+  run(options: SearchOptions, callback: SearchCallback<void>): void;
+
+  status(options?: SearchOptions): Promise<AzureSearchResponse<IndexerStatusResult>>;
+  status(callback: SearchCallback<IndexerStatusResult>): void;
+  status(options: SearchOptions, callback: SearchCallback<IndexerStatusResult>): void;
+
+  reset(options?: SearchOptions): Promise<AzureSearchResponse<void>>;
+  reset(callback: SearchCallback<void>): void;
+  reset(options: SearchOptions, callback: SearchCallback<void>): void;
+}
+
 /**
  * Manage an Azure Search indexer resource
  */
-export class Indexer extends SearchResource<IndexerSchema> {
+export class Indexer extends SearchResource<IndexerSchema> implements IIndexer {
 
   /**
    * Manage an Azure Search indexer resource
