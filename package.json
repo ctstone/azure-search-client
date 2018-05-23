@@ -1,7 +1,7 @@
 {
   "name": "azure-search-client",
   "description": "Client for Azure Search",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
@@ -12,7 +12,9 @@
     "url": "https://github.com/ctstone/azure-search-client",
     "type": "git"
   },
-  "keywords": ["azure search"],
+  "keywords": [
+    "azure search"
+  ],
   "author": "chstone@microsoft.com",
   "license": "MIT",
   "dependencies": {
