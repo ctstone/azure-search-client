@@ -1,3 +1,4 @@
+import { FacetBuilder } from './facet-builder';
 import { Query } from './indexes';
 import { QueryFilter } from './query-filter';
 
@@ -19,17 +20,15 @@ export class QueryBuilder {
   }
 
   /** A field to facet by (may be called multiple times for multiple fields) */
-  facet(expression: string) {
+  facet(expression: string | FacetBuilder) {
     this.query.facets = this.query.facets || [];
-    this.query.facets.push(expression);
+    this.query.facets.push(typeof expression === 'string' ? expression : expression.toString());
     return this;
   }
 
   /** A structured search expression in standard OData syntax */
   filter(filter: string|QueryFilter) {
-    this.query.filter = typeof filter === 'string'
-      ? filter
-      : filter.compile();
+    this.query.filter = typeof filter === 'string' ? filter : filter.toString();
     return this;
   }
 
@@ -64,6 +63,16 @@ export class QueryBuilder {
   /** Set ordering for a field (may be called multiple times for multiple fields) */
   orderbyDesc(field: string) {
     return this.orderby(field, 'desc');
+  }
+
+  /** Set ordering based on distance */
+  orderByGeoDistance(field: string, point: [number, number], dir: 'asc' | 'desc' = 'asc') {
+    return this.orderby(`geo.distance(${field}, geography'POINT(${point[0]} ${point[1]})')`, dir);
+  }
+
+  /** Sort by search score */
+  orderByScore(dir: 'asc' | 'desc' = 'desc') {
+    return this.orderby('search.score()', dir);
   }
 
   /**
@@ -144,11 +153,11 @@ export class QueryBuilder {
     return this;
   }
 
-  private orderby(field: string, dir: string) {
+  private orderby(expression: string, dir: string) {
     this.query.orderby = this.query.orderby
       ? this.query.orderby + ','
       : '';
-    this.query.orderby += `${field} ${dir}`;
+    this.query.orderby += `${expression} ${dir}`;
     return this;
   }
 }

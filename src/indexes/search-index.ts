@@ -1,7 +1,7 @@
 import { Indexes } from ".";
 import { jsonParser } from "../parsers";
 import { SearchRequester } from "../search-requester";
-import { SearchResource, ISearchResource } from "../search-resource";
+import { ISearchResource, SearchResource } from "../search-resource";
 import { AzureSearchResponse, ListOptions, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
 import {
   AnalyzeQuery,
@@ -16,6 +16,7 @@ import {
   SearchResponse,
   SearchResults,
   SuggestQuery,
+  SuggestResponse,
   SuggestResults,
 } from './types';
 
@@ -52,7 +53,7 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param query query to execute
    * @param options optional request options
    */
-  search<T>(query: Query, options?: SearchOptions): Promise<AzureSearchResponse<SearchResults<T>>>;
+  search<T>(query: Query, options?: SearchOptions): Promise<SearchResponse<T>>;
   search<T>(query: Query, callback: SearchCallback<SearchResults<T>>): void;
   search<T>(query: Query, options: SearchOptions, callback: SearchCallback<SearchResults<T>>): void;
 
@@ -61,7 +62,7 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param query query to execute
    * @param options optional request options
    */
-  suggest<T>(query: SuggestQuery, options?: SearchOptions): Promise<AzureSearchResponse<SuggestResults<T>>>;
+  suggest<T>(query: SuggestQuery, options?: SearchOptions): Promise<SuggestResponse<T>>;
   suggest<T>(query: SuggestQuery, callback: SearchCallback<SuggestResults<T>>): void;
   suggest<T>(query: SuggestQuery, options: SearchOptions, callback: SearchCallback<SuggestResults<T>>): void;
 
@@ -94,9 +95,9 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param key document key
    * @param options optional request options
    */
-  lookup(key: string, options?: SearchOptions): Promise<AzureSearchResponse<Document>>;
-  lookup(key: string, callback: SearchCallback<Document>): void;
-  lookup(key: string, options: SearchOptions, callback: SearchCallback<Document>): void;
+  lookup<T>(key: string, options?: SearchOptions): Promise<AzureSearchResponse<Document & T>>;
+  lookup<T>(key: string, callback: SearchCallback<Document & T>): void;
+  lookup<T>(key: string, options: SearchOptions, callback: SearchCallback<Document & T>): void;
 
   /**
    * Retrieve a count of the number of documents in a search index
@@ -143,7 +144,7 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  async index(documents: IndexDocument[], options?: SearchOptions) {
+  async index<T>(documents: Array<IndexDocument & T>, options?: SearchOptions) {
     const buffer: IndexingBuffer = { data: [], bytes: 0, position: 0, count: 0 };
     const comma = Buffer.from(',');
     const open = Buffer.from('{"value":[');
@@ -201,7 +202,7 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  lookup(key: string, optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<Document>, callback?: SearchCallback<Document>) {
+  lookup<T>(key: string, optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<Document & T>, callback?: SearchCallback<Document & T>) {
     return this.request<Document>({
       method: 'get',
       path: `/docs/${key}`,

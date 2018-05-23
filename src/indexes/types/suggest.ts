@@ -1,4 +1,4 @@
-import { ListResults } from "../../types";
+import { AzureSearchResponse, ListResults } from "../../types";
 import { Document } from './search';
 
 export interface SuggestQuery {
@@ -20,4 +20,7 @@ export interface SuggestResults<T> extends ListResults<T & SuggestDocument> {
 
 export interface SuggestDocument extends Document {
   '@search.text': string;
+}
+
+export interface SuggestResponse<T> extends AzureSearchResponse<SuggestResults<T>> {
 }

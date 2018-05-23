@@ -1,4 +1,5 @@
 import { Query } from '.';
+import { LambdaQueryFilter } from './lambda-query-filter';
 
 enum Logical {
   and = 'and',
@@ -17,7 +18,16 @@ enum Comparison {
 
 type Expression = string | QueryFilter;
 
+const LAMBDA_VAR = 'x';
+
 export type Scalar = string | number | boolean | Date;
+
+export enum GeoComparison {
+  gt = 'gt',
+  lt = 'lt',
+  ge = 'ge',
+  le = 'le',
+}
 
 /** Construct a filter string to be used with Azure Search */
 export class QueryFilter {
@@ -100,57 +110,93 @@ export class QueryFilter {
   }
 
   /**
-   * @throws Not Implemented
+   * Evaluates search query as a part of a filter expression
+   * @param search the search query (in either simple or full query syntax).
+   * @param searchFields searchable fields to search in, defaults to all searchable fields in the index.
+   * @param queryType "simple" or "full", defaults to "simple". Specifies what query language was used in the search parameter.
+   * @param searchMode "any" or "all", defaults to "any". Indicates whether any or all of the search terms must be matched in order to count the document as a match.
    */
-  isMatch() {
-    throw new Error('Not implemented');
+  isMatch(search: string, searchFields?: string[], queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
+    const params = [search, searchFields ? searchFields.join(',') : null, queryType, searchMode]
+      .filter((x) => !!x)
+      .map((x) => `'${x.replace(/'/g, `\'`)}'`)
+      .join(', ');
+    this.append(`search.ismatch(${params})`);
+    return this;
   }
 
   /**
-   * @throws Not Implemented
+   * Evaluates search query as a part of a filter expression (with relevance score of documents matching this filter contributing to the overall document score)
+   * @param search the search query (in either simple or full query syntax).
+   * @param searchFields searchable fields to search in, defaults to all searchable fields in the index.
+   * @param queryType "simple" or "full", defaults to "simple". Specifies what query language was used in the search parameter.
+   * @param searchMode "any" or "all", defaults to "any". Indicates whether any or all of the search terms must be matched in order to count the document as a match.
    */
-  isMatchScoring() {
-    throw new Error('Not implemented');
+  isMatchScoring(search: string, searchFields?: string[], queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
+    const params = [search, searchFields ? searchFields.join(',') : null, queryType, searchMode]
+      .filter((x) => !!x)
+      .map((x) => `'${x.replace(/'/g, `\'`)}'`)
+      .join(', ');
+    this.append(`search.ismatchscoring(${params})`);
+    return this;
   }
 
   /**
-   * @throws Not Implemented
+   * Filter string collection such that any member may match a predicate
+   * @param field index field name
+   * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  any() {
-    throw new Error('Not implemented');
+  any(field: string, filter?: LambdaQueryFilter) {
+    this.append(`${field}/any(${LAMBDA_VAR}: ${filter ? filter.toString(LAMBDA_VAR) : ''})`);
+    return this;
   }
 
   /**
-   * @throws Not Implemented
+   * Filter string collection such that all members must match a predicate
+   * @param field index field name
+   * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  all() {
-    throw new Error('Not implemented');
+  all(field: string, filter?: LambdaQueryFilter) {
+    this.append(`${field}/all(${filter ? filter.toString('x') : ''})`);
+    return this;
   }
 
   /** apply a field reference filter */
-  ref(fieldName: string) {
+  field(fieldName: string) {
     this.append(fieldName);
+    return this;
   }
 
   /**
-   * @throws Not Implemented
+   * Returns the distance in kilometers between two points, one being a field and one being a constant passed as part of the filter.
+   * @param field index field name
+   * @param point [lat, lon]
+   * @param op comparison operator
+   * @param value comparison operand
    */
-  geoDistance() {
-    throw new Error('Not implemented');
+  geoDistance(field: string, point: [number, number], op: GeoComparison, value: number) {
+    this.append(`geo.distance(${field}, geography'POINT(${point[0]} ${point[1]})') ${op} ${value}`);
+    return this;
   }
 
   /**
-   * @throws Not Implemented
+   * Returns true if a given point is within a given polygon, where the point is a field and the polygon is specified as a constant passed as part of the filter.
+   * @param field index field name
+   * @param polygon array of [lat, lon]
    */
-  geoIntersects() {
-    throw new Error('Not implemented');
+  geoIntersects(field: string, polygon: Array<[number, number]>) {
+    const points = polygon
+      .map(([x, y]) => `${x} ${y}`)
+      .join(', ');
+    this.append(`geo.intersects(${field}, geography'POLYGON((${points}))')`);
+    return this;
   }
 
   /** return filter as a string */
-  compile(): string {
+  toString(): string {
     const ops = this.expressions
       .filter((x) => x)
-      .map((x) => typeof (x) === 'string' ? x : `${x.compile()}`)
+      .map((x) => typeof (x) === 'string' ? x : `${x.toString()}`)
       .filter((x) => x.trim())
       .map((x) => `(${x})`)
       .map((x) => this.isUnary() ? ` ${this.mode} ${x} ` : x);
