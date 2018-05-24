@@ -1,4 +1,4 @@
-import { TypedQueryFilter } from "./typed-query-filter";
+import { QueryFilter as Temp } from "./typed/query-filter";
 
-export class QueryFilter extends TypedQueryFilter<any> {
+export class QueryFilter extends Temp<any> {
 }

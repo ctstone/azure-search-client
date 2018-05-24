@@ -16,7 +16,7 @@ export enum FacetDateInterval {
   year = 'year',
 }
 
-export class TypedFacetBuilder<TDocument> {
+export class FacetBuilder<TDocument> {
   private params: FacetParameters = {};
 
   constructor(private field: keyof TDocument) { }

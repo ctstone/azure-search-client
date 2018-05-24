@@ -1,4 +1,4 @@
-import { TypedQueryBuilder } from "./typed-query-builder";
+import { QueryBuilder as Temp } from "./typed/query-builder";
 
-export class QueryBuilder extends TypedQueryBuilder<any> {
+export class QueryBuilder extends Temp<any> {
 }

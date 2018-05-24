@@ -334,9 +334,11 @@ Use your own Document types wherever documents are used: indexing, search, sugge
 
 ---
 
-To ensure type safety when using the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities, switch to their typed equivilents (`TypedQueryBuilder<TDocument>`, `TypedQueryFilter<TDocument>`, and `TypedFacetBuilder<TDocument>`). These classes are strongly typed to ensure that field names and values correspond with the actual properties of your document model:
+To ensure type safety when using the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities, switch to their typed equivilents by importing from `'azure-search-client/dist/typed'`. These classes are strongly typed to ensure that field names and values correspond with the actual properties of your document model:
 
 ```TypeScript
+import { FacetBuilder, QueryBuilder, QueryFilter  } from 'azure-search-client/dist/typed';
+
 interface MyDoc {
   id: string;
   num: number;
@@ -344,20 +346,20 @@ interface MyDoc {
   content: string;
 }
 
-new TypedQueryBuilder<MyDoc>()
+new QueryBuilder<MyDoc>()
     .searchFields('content') // ok
     .facet('num') // ok
 
     // following will cause compile errors since 'blah' and 'foo' are not part of the document model
-    .facet(new TypedFacetBuilder<MyDoc>('blah').count(100))
+    .facet(new FacetBuilder<MyDoc>('blah').count(100))
     .select('id', 'foo')
     .highlight('foo')
     .orderbyAsc('foo');
 
-new TypedQueryFilter<MyDoc>()
+new QueryFilter<MyDoc>()
   .eq('id', 'foo') // ok
   .lt('date', new Date()) // ok
   .eq('num', 'not a number'); // compile failure: string is not assignable to number field
 ```
 
-The typed utilities are interchangable with their non-typed counterparts. Use them to catch simple field name typos early.
+The typed utilities are interchangable with their non-typed counterparts. Use them to catch simple field name typos and assignment errors at compile time.

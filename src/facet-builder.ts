@@ -1,4 +1,4 @@
-import { TypedFacetBuilder } from "./typed-facet-builder";
+import { FacetBuilder as Temp } from "./typed/facet-builder";
 
-export class FacetBuilder extends TypedFacetBuilder<any> {
+export class FacetBuilder extends Temp<any> {
 }

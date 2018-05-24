@@ -1,5 +1,5 @@
-import { LambdaQueryFilter } from './lambda-query-filter';
-import { TypedQueryBuilder } from './typed-query-builder';
+import { LambdaQueryFilter } from '../lambda-query-filter';
+import { QueryBuilder } from './query-builder';
 
 enum Logical {
   and = 'and',
@@ -16,7 +16,7 @@ enum Comparison {
   le = 'le',
 }
 
-type Expression<TDocument> = string | TypedQueryFilter<TDocument>;
+type Expression<TDocument> = string | QueryFilter<TDocument>;
 
 const LAMBDA_VAR = 'x';
 
@@ -30,25 +30,25 @@ export enum GeoComparison {
 }
 
 /** Construct a filter string to be used with Azure Search */
-export class TypedQueryFilter<TDocument> {
+export class QueryFilter<TDocument> {
 
   /** join multiple filters together with a logical NOT */
-  static not<TDocument>(...filters: Array<TypedQueryFilter<TDocument>>) {
-    return TypedQueryFilter.join(Logical.not, ...filters);
+  static not<TDocument>(...filters: Array<QueryFilter<TDocument>>) {
+    return QueryFilter.join(Logical.not, ...filters);
   }
 
   /** join multiple filters together with a logical OR */
-  static or<TDocument>(...filters: Array<TypedQueryFilter<TDocument>>) {
-    return TypedQueryFilter.join(Logical.or, ...filters);
+  static or<TDocument>(...filters: Array<QueryFilter<TDocument>>) {
+    return QueryFilter.join(Logical.or, ...filters);
   }
 
   /** join multiple filters together with a logical AND */
-  static and<TDocument>(...filters: Array<TypedQueryFilter<TDocument>>) {
-    return TypedQueryFilter.join(Logical.and, ...filters);
+  static and<TDocument>(...filters: Array<QueryFilter<TDocument>>) {
+    return QueryFilter.join(Logical.and, ...filters);
   }
 
-  private static join<TDocument>(mode: Logical, ...filters: Array<TypedQueryFilter<TDocument>>) {
-    const qf = new TypedQueryFilter<TDocument>();
+  private static join<TDocument>(mode: Logical, ...filters: Array<QueryFilter<TDocument>>) {
+    const qf = new QueryFilter<TDocument>();
     qf.mode = mode;
     qf.expressions = filters;
     return qf;
@@ -58,18 +58,18 @@ export class TypedQueryFilter<TDocument> {
   private expressions: Array<Expression<TDocument>> = [];
 
   /** append a new filter to this query using a logical AND */
-  and(...filters: Array<TypedQueryFilter<TDocument>>): this {
-    return this.append(TypedQueryFilter.and(...filters));
+  and(...filters: Array<QueryFilter<TDocument>>): this {
+    return this.append(QueryFilter.and(...filters));
   }
 
   /** append a new filter to this query using a logical OR */
-  or(...filters: Array<TypedQueryFilter<TDocument>>): this {
-    return this.append(TypedQueryFilter.or(...filters));
+  or(...filters: Array<QueryFilter<TDocument>>): this {
+    return this.append(QueryFilter.or(...filters));
   }
 
   /** append a new filter to this query using a logical NOT */
-  not(...filters: Array<TypedQueryFilter<TDocument>>): this {
-    return this.append(TypedQueryFilter.not(...filters));
+  not(...filters: Array<QueryFilter<TDocument>>): this {
+    return this.append(QueryFilter.not(...filters));
   }
 
   /** apply the equals operator */

@@ -1,9 +1,9 @@
-import { Query } from './indexes';
-import { TypedFacetBuilder } from './typed-facet-builder';
-import { TypedQueryFilter } from './typed-query-filter';
+import { Query } from '../indexes';
+import { FacetBuilder } from './facet-builder';
+import { QueryFilter } from './query-filter';
 
 /** Construct a query object to be used with Azure Search */
-export class TypedQueryBuilder<TDocument> {
+export class QueryBuilder<TDocument> {
 
   /** Apply Lucene-syntax escaping to the search string */
   static escape(search: string) {
@@ -20,14 +20,14 @@ export class TypedQueryBuilder<TDocument> {
   }
 
   /** A field to facet by (may be called multiple times for multiple fields) */
-  facet<K extends keyof TDocument>(fieldOrExpression: K | TypedFacetBuilder<TDocument>) {
+  facet<K extends keyof TDocument>(fieldOrExpression: K | FacetBuilder<TDocument>) {
     this.query.facets = this.query.facets || [];
     this.query.facets.push(typeof fieldOrExpression === 'string' ? fieldOrExpression : fieldOrExpression.toString());
     return this;
   }
 
   /** A structured search expression in standard OData syntax */
-  filter(filter: string|TypedQueryFilter<TDocument>) {
+  filter(filter: string|QueryFilter<TDocument>) {
     this.query.filter = typeof filter === 'string' ? filter : filter.toString();
     return this;
   }
