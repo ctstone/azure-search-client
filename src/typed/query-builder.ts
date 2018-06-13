@@ -22,7 +22,7 @@ export class QueryBuilder<TDocument> {
   /** A field to facet by (may be called multiple times for multiple fields) */
   facet<K extends keyof TDocument>(fieldOrExpression: K | FacetBuilder<TDocument>) {
     this.query.facets = this.query.facets || [];
-    this.query.facets.push(typeof fieldOrExpression === 'string' ? fieldOrExpression : fieldOrExpression.toString());
+    this.query.facets.push(typeof fieldOrExpression === 'string' ? fieldOrExpression as string : fieldOrExpression.toString());
     return this;
   }
 
@@ -57,12 +57,12 @@ export class QueryBuilder<TDocument> {
 
   /** Set ordering for a field (may be called multiple times for multiple fields) */
   orderbyAsc<K extends keyof TDocument>(field: K) {
-    return this.orderby(field, 'asc');
+    return this.orderby(field as string, 'asc');
   }
 
   /** Set ordering for a field (may be called multiple times for multiple fields) */
   orderbyDesc<K extends keyof TDocument>(field: K) {
-    return this.orderby(field, 'desc');
+    return this.orderby(field as string, 'desc');
   }
 
   /** Set ordering based on distance */

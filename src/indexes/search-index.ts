@@ -14,6 +14,7 @@ import {
   IndexSchema,
   IndexStatistics,
   Query,
+  SearchDocument,
   SearchResponse,
   SearchResults,
   SuggestQuery,
@@ -34,7 +35,10 @@ export {
   IndexStatistics,
   Document,
   SearchResponse,
+  SearchDocument,
 };
+
+export * from './types/search';
 
 const MAX_INDEXING_BYTES = 16 * Math.pow(2, 20);
 const MAX_INDEXING_COUNT = 1000;

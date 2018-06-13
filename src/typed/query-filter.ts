@@ -1,5 +1,4 @@
 import { LambdaQueryFilter } from '../lambda-query-filter';
-import { QueryBuilder } from './query-builder';
 
 enum Logical {
   and = 'and',
@@ -163,7 +162,7 @@ export class QueryFilter<TDocument> {
 
   /** apply a field reference filter */
   field(fieldName: keyof TDocument) {
-    this.append(fieldName);
+    this.append(fieldName as string);
     return this;
   }
 
