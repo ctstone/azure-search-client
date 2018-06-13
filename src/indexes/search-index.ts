@@ -33,6 +33,7 @@ export {
   IndexingResults,
   IndexStatistics,
   Document,
+  SearchResponse,
 };
 
 const MAX_INDEXING_BYTES = 16 * Math.pow(2, 20);
