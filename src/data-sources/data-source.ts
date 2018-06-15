@@ -1,4 +1,3 @@
-import { DataSources } from '.';
 import { SearchRequester } from '../search-requester';
 import { ISearchResource, SearchResource } from '../search-resource';
 import { DataSourceSchema } from './types';

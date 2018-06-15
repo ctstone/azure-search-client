@@ -1,5 +1,4 @@
 import { SearchRequester } from './search-requester';
-import { SearchResourceGroup } from './search-resource-group';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
 export interface ISearchResource<T> {

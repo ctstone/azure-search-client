@@ -5,18 +5,27 @@ import { IndexerSchema } from "./types";
 
 export * from './indexer';
 
-export interface IIndexers extends IResourceGroup<IndexerSchema, IIndexer> {
+export interface IIndexers extends IResourceGroup<IndexerSchema> {
+  /**
+   * Use a named indexer
+   * @param indexerName name of the indexer
+   */
+  use(indexerName: string): IIndexer;
 }
 
 /**
  * Manage Azure Search indexer resources
  */
-export class Indexers extends SearchResourceGroup<Indexer, IndexerSchema, IIndexer> {
+export class Indexers extends SearchResourceGroup<IndexerSchema> {
   /**
    * Manage Azure Search indexer resources
    * @param requester http handler
    */
   constructor(requester: SearchRequester) {
-    super(requester, 'indexers', Indexer);
+    super(requester, 'indexers');
+  }
+
+  use(indexerName: string) {
+    return new Indexer(this.requester, this.type, indexerName);
   }
 }

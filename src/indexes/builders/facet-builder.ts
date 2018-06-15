@@ -1,3 +1,5 @@
+import { FieldName } from "./query-builder";
+
 interface FacetParameters {
   count?: number;
   sort?: string;
@@ -16,10 +18,10 @@ export enum FacetDateInterval {
   year = 'year',
 }
 
-export class FacetBuilder<TDocument> {
+export class FacetBuilder<TDocument = any> {
   private params: FacetParameters = {};
 
-  constructor(private field: keyof TDocument) { }
+  constructor(private field: FieldName<TDocument>) { }
 
   /**
    * Set the max number of facet terms
@@ -88,12 +90,12 @@ export class FacetBuilder<TDocument> {
    */
   toString() {
     const params = [
-        ['count', this.params.count],
-        ['sort', this.params.sort],
-        ['values', this.params.values],
-        ['interval', this.params.interval],
-        ['timeoffset', this.params.timeoffset],
-      ]
+      ['count', this.params.count],
+      ['sort', this.params.sort],
+      ['values', this.params.values],
+      ['interval', this.params.interval],
+      ['timeoffset', this.params.timeoffset],
+    ]
       .filter(([key, val]) => !!val)
       .map(([key, val]) => `${key}:${val}`)
       .join(',');

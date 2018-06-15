@@ -47,11 +47,11 @@ export interface GeoJSON {
   coordinates: [number, number];
 }
 
-export interface Document {
+export interface IDocument {
   [field: string]: FieldValue;
 }
 
-export interface SearchDocument extends Document {
+export interface SearchDocument {
   '@search.score': number;
   '@search.highlights'?: Highlights;
 }
@@ -71,4 +71,4 @@ export interface DocumentParseOptions {
   parseDates?: boolean;
 }
 
-export type FieldValue = string | number | boolean | string[] | GeoJSON | any;
+export type FieldValue = string | number | boolean | string[] | GeoJSON | Date | any;

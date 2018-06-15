@@ -1,4 +1,3 @@
-import { Indexers } from '.';
 import { SearchRequester } from '../search-requester';
 import { ISearchResource, SearchResource } from '../search-resource';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';

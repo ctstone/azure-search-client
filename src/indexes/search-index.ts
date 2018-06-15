@@ -1,13 +1,13 @@
-import { Indexes } from ".";
 import { jsonParser } from "../parsers";
 import { SearchRequester } from "../search-requester";
 import { ISearchResource, SearchResource } from "../search-resource";
 import { AzureSearchResponse, ListOptions, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
+import { Builder, FacetBuilder, FieldName } from "./builders";
 import {
   AnalyzeQuery,
   AnalyzeResults,
-  Document,
   DocumentParseOptions,
+  IDocument,
   IndexDocument,
   IndexingResult,
   IndexingResults,
@@ -33,7 +33,7 @@ export {
   AnalyzeResults,
   IndexingResults,
   IndexStatistics,
-  Document,
+  IDocument,
   SearchResponse,
   SearchDocument,
 };
@@ -54,24 +54,27 @@ interface IndexingBuffer {
 /**
  * Manage Azure Search index resources
  */
-export interface ISearchIndex extends ISearchResource<IndexSchema> {
+export interface ISearchIndex<TDocument = any> extends ISearchResource<IndexSchema> {
+
+  builder: Builder<TDocument>;
+
   /**
    * Execute a search query
    * @param query query to execute
    * @param options optional request options
    */
-  search<T>(query: Query, options?: SearchOptions & DocumentParseOptions): Promise<SearchResponse<T>>;
-  search<T>(query: Query, callback: SearchCallback<SearchResults<T>>): void;
-  search<T>(query: Query, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SearchResults<T>>): void;
+  search(query?: Query, options?: SearchOptions & DocumentParseOptions): Promise<SearchResponse<TDocument>>;
+  search(query: Query, callback: SearchCallback<SearchResults<TDocument>>): void;
+  search(query: Query, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SearchResults<TDocument>>): void;
 
   /**
    * Execute a suggest query
    * @param query query to execute
    * @param options optional request options
    */
-  suggest<T>(query: SuggestQuery, options?: SearchOptions & DocumentParseOptions): Promise<SuggestResponse<T>>;
-  suggest<T>(query: SuggestQuery, callback: SearchCallback<SuggestResults<T>>): void;
-  suggest<T>(query: SuggestQuery, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SuggestResults<T>>): void;
+  suggest(query: SuggestQuery, options?: SearchOptions & DocumentParseOptions): Promise<SuggestResponse<TDocument>>;
+  suggest(query: SuggestQuery, callback: SearchCallback<SuggestResults<TDocument>>): void;
+  suggest(query: SuggestQuery, options: SearchOptions & DocumentParseOptions, callback: SearchCallback<SuggestResults<TDocument>>): void;
 
   /**
    * Perform indexing analysis on text
@@ -87,7 +90,7 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param documents documents to index
    * @param options optional request options
    */
-  index(documents: IndexDocument[], options?: SearchOptions): Promise<IndexingResult[]>;
+  index(documents: Array<IndexDocument & TDocument>, options?: SearchOptions): Promise<IndexingResult[]>;
 
   /**
    * Get document count and usage for the current index
@@ -102,9 +105,9 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
    * @param key document key
    * @param options optional request options
    */
-  lookup<T>(key: string, options?: SearchOptions): Promise<AzureSearchResponse<Document & T>>;
-  lookup<T>(key: string, callback: SearchCallback<Document & T>): void;
-  lookup<T>(key: string, options: SearchOptions, callback: SearchCallback<Document & T>): void;
+  lookup(key: string, options?: SearchOptions): Promise<AzureSearchResponse<IDocument & TDocument>>;
+  lookup(key: string, callback: SearchCallback<IDocument & TDocument>): void;
+  lookup(key: string, options: SearchOptions, callback: SearchCallback<IDocument & TDocument>): void;
 
   /**
    * Retrieve a count of the number of documents in a search index
@@ -113,9 +116,16 @@ export interface ISearchIndex extends ISearchResource<IndexSchema> {
   count(options?: SearchOptions): Promise<AzureSearchResponse<number>>;
   count(callback: SearchCallback<number>): void;
   count(options: SearchOptions, callback: SearchCallback<number>): void;
+
+  /**
+   * Create a new FacetBuilder for this index
+   */
+  facet(field: FieldName<TDocument>): FacetBuilder<TDocument>;
 }
 
-export class SearchIndex extends SearchResource<IndexSchema> implements ISearchIndex {
+export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> implements ISearchIndex<TDocument> {
+
+  get builder() { return new Builder<TDocument>(); }
 
   /**
    * Manage Azure Search index resources
@@ -127,12 +137,12 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     super(requester, type, name);
   }
 
-  search<T>(query: Query, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SearchResults<T>>, callback?: SearchCallback<SearchResults<T>>) {
+  search(query: Query, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SearchResults<TDocument>>, callback?: SearchCallback<SearchResults<TDocument>>) {
     const options: SearchOptions & DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
     if (options.parseDates === undefined) {
       options.parseDates = true;
     }
-    return this.request<SearchResults<T>>({
+    return this.request<SearchResults<TDocument>>({
       method: 'post',
       path: '/docs/search',
       body: query,
@@ -145,12 +155,12 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  suggest<T>(query: SuggestQuery, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SuggestResults<T>>, callback?: SearchCallback<SuggestResults<T>>) {
+  suggest(query: SuggestQuery, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SuggestResults<TDocument>>, callback?: SearchCallback<SuggestResults<TDocument>>) {
     const options: DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
     if (options.parseDates === undefined) {
       options.parseDates = true;
     }
-    return this.request<SuggestResults<T>>({
+    return this.request<SuggestResults<TDocument>>({
       method: 'post',
       path: '/docs/suggest',
       body: query,
@@ -171,7 +181,7 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  async index<T>(documents: Array<IndexDocument & T>, options?: SearchOptions) {
+  async index(documents: Array<IndexDocument & TDocument>, options?: SearchOptions) {
     const buffer: IndexingBuffer = { data: [], bytes: 0, position: 0, count: 0 };
     const comma = Buffer.from(',');
     const open = Buffer.from('{"value":[');
@@ -229,12 +239,12 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
     }, optionsOrCallback, callback);
   }
 
-  lookup<T>(key: string, optionsOrCallback?: (SearchOptions & ListOptions & DocumentParseOptions) | SearchCallback<Document & T>, callback?: SearchCallback<Document & T>) {
+  lookup(key: string, optionsOrCallback?: (SearchOptions & ListOptions & DocumentParseOptions) | SearchCallback<IDocument & TDocument>, callback?: SearchCallback<IDocument & TDocument>) {
     const options: DocumentParseOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback || {};
     if (options.parseDates === undefined) {
       options.parseDates = true;
     }
-    return this.request<Document>({
+    return this.request<IDocument & TDocument>({
       method: 'get',
       path: `/docs/${key}`,
       parser: jsonParser((key, value) => {
@@ -253,5 +263,9 @@ export class SearchIndex extends SearchResource<IndexSchema> implements ISearchI
       headers: { accept: 'text/plain' },
       parser: jsonParser(),
     }, optionsOrCallback, callback);
+  }
+
+  facet(field: FieldName<TDocument>) {
+    return new FacetBuilder<TDocument>(field);
   }
 }

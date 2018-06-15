@@ -1,5 +1,5 @@
 import { AzureSearchResponse, ListResults } from "../../types";
-import { Document } from './search';
+import { IDocument } from './search';
 
 export interface SuggestQuery {
   filter: string;
@@ -18,7 +18,7 @@ export interface SuggestResults<T> extends ListResults<T & SuggestDocument> {
   '@search.coverage': number;
 }
 
-export interface SuggestDocument extends Document {
+export interface SuggestDocument extends IDocument {
   '@search.text': string;
 }
 

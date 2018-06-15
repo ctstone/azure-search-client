@@ -1,5 +1,5 @@
 import { ListResults } from "../../types";
-import { Document } from './search';
+import { IDocument } from './search';
 
 export interface IndexingResult {
   key: string;
@@ -10,6 +10,6 @@ export interface IndexingResult {
 export interface IndexingResults extends ListResults<IndexingResult> {
 }
 
-export interface IndexDocument extends Document {
+export interface IndexDocument {
   '@search.action'?: 'upload' | 'merge' | 'mergeOrUpload' | 'delete';
 }

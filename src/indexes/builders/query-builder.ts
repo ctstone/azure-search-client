@@ -1,9 +1,13 @@
-import { Query } from '../indexes';
+import { SearchOptions } from '../../types';
+import { ISearchIndex } from '../search-index';
+import { DocumentParseOptions, Query } from '../types/search';
 import { FacetBuilder } from './facet-builder';
 import { QueryFilter } from './query-filter';
 
+export type FieldName<TDocument> = Extract<keyof TDocument, string>;
+
 /** Construct a query object to be used with Azure Search */
-export class QueryBuilder<TDocument> {
+export class QueryBuilder<TDocument = any> {
 
   /** Apply Lucene-syntax escaping to the search string */
   static escape(search: string) {
@@ -13,6 +17,8 @@ export class QueryBuilder<TDocument> {
   /** The current query value */
   readonly query: Query = {};
 
+  constructor(private index?: ISearchIndex<TDocument>) { }
+
   /** Specifies whether to fetch the total count of results  */
   count(enabled = true) {
     this.query.count = enabled;
@@ -20,20 +26,20 @@ export class QueryBuilder<TDocument> {
   }
 
   /** A field to facet by (may be called multiple times for multiple fields) */
-  facet<K extends keyof TDocument>(fieldOrExpression: K | FacetBuilder<TDocument>) {
+  facet<K extends FieldName<TDocument>>(fieldOrExpression: K | FacetBuilder<TDocument>) {
     this.query.facets = this.query.facets || [];
     this.query.facets.push(typeof fieldOrExpression === 'string' ? fieldOrExpression as string : fieldOrExpression.toString());
     return this;
   }
 
   /** A structured search expression in standard OData syntax */
-  filter(filter: string|QueryFilter<TDocument>) {
+  filter(filter: string | QueryFilter<TDocument>) {
     this.query.filter = typeof filter === 'string' ? filter : filter.toString();
     return this;
   }
 
   /** Set fields used for hit highlighting */
-  highlight<K extends keyof TDocument>(...fields: K[]) {
+  highlight<K extends FieldName<TDocument>>(...fields: K[]) {
     this.query.highlight = fields.join(',');
     return this;
   }
@@ -56,17 +62,17 @@ export class QueryBuilder<TDocument> {
   }
 
   /** Set ordering for a field (may be called multiple times for multiple fields) */
-  orderbyAsc<K extends keyof TDocument>(field: K) {
+  orderbyAsc<K extends FieldName<TDocument>>(field: K) {
     return this.orderby(field as string, 'asc');
   }
 
   /** Set ordering for a field (may be called multiple times for multiple fields) */
-  orderbyDesc<K extends keyof TDocument>(field: K) {
+  orderbyDesc<K extends FieldName<TDocument>>(field: K) {
     return this.orderby(field as string, 'desc');
   }
 
   /** Set ordering based on distance */
-  orderByGeoDistance<K extends keyof TDocument>(field: K, point: [number, number], dir: 'asc' | 'desc' = 'asc') {
+  orderByGeoDistance<K extends FieldName<TDocument>>(field: K, point: [number, number], dir: 'asc' | 'desc' = 'asc') {
     return this.orderby(`geo.distance(${field}, geography'POINT(${point[0]} ${point[1]})')`, dir);
   }
 
@@ -106,7 +112,7 @@ export class QueryBuilder<TDocument> {
   /**
    * Field names to search for the specified text
    */
-  searchFields<K extends keyof TDocument>(...fields: K[]) {
+  searchFields<K extends FieldName<TDocument>>(...fields: K[]) {
     this.query.searchFields = fields.join(',');
     return this;
   }
@@ -120,9 +126,9 @@ export class QueryBuilder<TDocument> {
   }
 
   /**
-   * Felds to include in the result set
+   * Fields to include in the result set
    */
-  select<K extends keyof TDocument>(...fields: K[]) {
+  select<K extends FieldName<TDocument>>(...fields: K[]) {
     this.query.select = fields.join(',');
     return this;
   }
@@ -151,6 +157,18 @@ export class QueryBuilder<TDocument> {
   queryType(type: 'simple' | 'full') {
     this.query.queryType = type;
     return this;
+  }
+
+  /**
+   * Execute the search query and return results (must pass an ISearchIndex in the QueryBuilder constructor)
+   * @param options optional search options
+   */
+  execute(options?: SearchOptions & DocumentParseOptions) {
+    if (!this.index) {
+      throw new Error('Cannot execute QueryBuilder without an index. Supply an ISearchIndex in the constructor');
+    }
+
+    return this.index.search(this.query, options);
   }
 
   private orderby(expression: string, dir: string) {

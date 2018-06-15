@@ -1,4 +1,5 @@
-import { LambdaQueryFilter } from '../lambda-query-filter';
+import { LambdaQueryFilter } from './lambda-query-filter';
+import { FieldName } from './query-builder';
 
 enum Logical {
   and = 'and',
@@ -29,7 +30,7 @@ export enum GeoComparison {
 }
 
 /** Construct a filter string to be used with Azure Search */
-export class QueryFilter<TDocument> {
+export class QueryFilter<TDocument = any> {
 
   /** join multiple filters together with a logical NOT */
   static not<TDocument>(...filters: Array<QueryFilter<TDocument>>) {
@@ -72,37 +73,37 @@ export class QueryFilter<TDocument> {
   }
 
   /** apply the equals operator */
-  eq<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  eq<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.eq, field, value);
   }
 
   /** apply the not-equal operator */
-  ne<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  ne<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.ne, field, value);
   }
 
   /** apply the greater-than operator */
-  gt<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  gt<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.gt, field, value);
   }
 
   /** apply the less-than operator */
-  lt<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  lt<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.lt, field, value);
   }
 
   /** apply the greater-than-or-equal-to operator */
-  ge<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  ge<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.ge, field, value);
   }
 
   /** apply the less-than-or-equal-to operator */
-  le<K extends keyof TDocument>(field: K, value: TDocument[K]) {
+  le<K extends FieldName<TDocument>>(field: K, value: TDocument[K]) {
     return this.compare(Comparison.le, field, value);
   }
 
   /** apply the search.in filter */
-  in<K extends keyof TDocument>(field: K, values: string[], separator = '|') {
+  in<K extends FieldName<TDocument>>(field: K, values: string[], separator = '|') {
     values = values.map((x) => x.replace(`'`, `\\'`));
     this.append(`search.in(${field}, '${values.join(separator)}', '${separator}')`);
     return this;
@@ -115,7 +116,7 @@ export class QueryFilter<TDocument> {
    * @param queryType "simple" or "full", defaults to "simple". Specifies what query language was used in the search parameter.
    * @param searchMode "any" or "all", defaults to "any". Indicates whether any or all of the search terms must be matched in order to count the document as a match.
    */
-  isMatch(search: string, searchFields?: Array<keyof TDocument>, queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
+  isMatch(search: string, searchFields?: Array<FieldName<TDocument>>, queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
     const params = [search, searchFields ? searchFields.join(',') : null, queryType, searchMode]
       .filter((x) => !!x)
       .map((x) => `'${x.replace(/'/g, `\'`)}'`)
@@ -131,7 +132,7 @@ export class QueryFilter<TDocument> {
    * @param queryType "simple" or "full", defaults to "simple". Specifies what query language was used in the search parameter.
    * @param searchMode "any" or "all", defaults to "any". Indicates whether any or all of the search terms must be matched in order to count the document as a match.
    */
-  isMatchScoring(search: string, searchFields?: Array<keyof TDocument>, queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
+  isMatchScoring(search: string, searchFields?: Array<FieldName<TDocument>>, queryType?: 'simple' | 'full', searchMode?: 'any' | 'all') {
     const params = [search, searchFields ? searchFields.join(',') : null, queryType, searchMode]
       .filter((x) => !!x)
       .map((x) => `'${x.replace(/'/g, `\'`)}'`)
@@ -145,7 +146,7 @@ export class QueryFilter<TDocument> {
    * @param field index field name
    * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  any<K extends keyof TDocument>(field: K, filter?: LambdaQueryFilter) {
+  any<K extends FieldName<TDocument>>(field: K, filter?: LambdaQueryFilter) {
     this.append(`${field}/any(${LAMBDA_VAR}: ${filter ? filter.toString(LAMBDA_VAR) : ''})`);
     return this;
   }
@@ -155,13 +156,13 @@ export class QueryFilter<TDocument> {
    * @param field index field name
    * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  all<K extends keyof TDocument>(field: K, filter?: LambdaQueryFilter) {
+  all<K extends FieldName<TDocument>>(field: K, filter?: LambdaQueryFilter) {
     this.append(`${field}/all(${filter ? filter.toString('x') : ''})`);
     return this;
   }
 
   /** apply a field reference filter */
-  field(fieldName: keyof TDocument) {
+  field(fieldName: FieldName<TDocument>) {
     this.append(fieldName as string);
     return this;
   }
@@ -173,7 +174,7 @@ export class QueryFilter<TDocument> {
    * @param op comparison operator
    * @param value comparison operand
    */
-  geoDistance<K extends keyof TDocument>(field: K, point: [number, number], op: GeoComparison, value: number) {
+  geoDistance<K extends FieldName<TDocument>>(field: K, point: [number, number], op: GeoComparison, value: number) {
     this.append(`geo.distance(${field}, geography'POINT(${point[0]} ${point[1]})') ${op} ${value}`);
     return this;
   }
@@ -183,7 +184,7 @@ export class QueryFilter<TDocument> {
    * @param field index field name
    * @param polygon array of [lat, lon]
    */
-  geoIntersects<K extends keyof TDocument>(field: K, polygon: Array<[number, number]>) {
+  geoIntersects<K extends FieldName<TDocument>>(field: K, polygon: Array<[number, number]>) {
     const points = polygon
       .map(([x, y]) => `${x} ${y}`)
       .join(', ');
@@ -202,7 +203,7 @@ export class QueryFilter<TDocument> {
     return ops.length ? ops.join(this.isUnary() ? ' ' : ` ${this.mode} `) : '';
   }
 
-  private compare<K extends keyof TDocument>(op: Comparison, field: K, value: TDocument[K]) {
+  private compare<K extends FieldName<TDocument>>(op: Comparison, field: K, value: TDocument[K]) {
     return this.append(`${field} ${op} ${this.prepValue(value)}`);
   }
 
@@ -211,7 +212,7 @@ export class QueryFilter<TDocument> {
     return this;
   }
 
-  private prepValue<K extends keyof TDocument>(value: TDocument[K]) {
+  private prepValue<K extends FieldName<TDocument>>(value: TDocument[K]) {
     if (typeof value === 'string') {
       value = `'${value.replace(`'`, `\\'`)}'` as any;
     } else if (value instanceof Date) {
