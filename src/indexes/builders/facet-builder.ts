@@ -1,4 +1,4 @@
-import { FieldName } from "./query-builder";
+import { FieldName, QueryBuilder } from "./query-builder";
 
 interface FacetParameters {
   count?: number;

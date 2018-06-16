@@ -33,12 +33,14 @@ client.indexes.use('myIndex').search({
 ### Full query API
 Use the Azure Search POST query representation
 
+> If you are using **TypeScript** see [how to use your own document models](#typescript-generics) on index operations.
+
 ```JavaScript
 client.indexes.use('myIndex').search({
   count: true,
   facets: ['field1', 'field2'],
   filter: `field1 eq 123 and field2 ne 'foo'`,
-  highlight: 'field1, field2'
+  highlight: 'field1, field2',
   highlightPreTag: '<b>',
   highlightPostTag: '</b>',
   minimumCoverage: 90,
@@ -62,17 +64,19 @@ client.indexes.use('myIndex').search({
 Use `QueryBuilder`, `FilterBuilder`, `FacetBuilder`, and `LambdaQueryFilter` helpers to build a query using method chaining.
 
 ```JavaScript
-client.indexes.use('myIndex').search(new QueryBuilder()
+client.indexes.use('myIndex')
+  .buildQuery()
   .count(true)
-  .facet('field1')
-  .facet(new FacetBuilder('field2')
-    .count(100)
-    .sortByValue('asc'))
-  .filter(new FilterBuilder()
+  .buildFacet('field1', (facet) => facet
+    .count(20)
+    .sortByValue('desc'))
+  .facet('field2', 'field3', new FacetBuilder('field4').count(20)) // can combine .buildFacet with .facet
+  .buildFilter((filter) => filter
     .eq('field1', 123)
-    .any('myCollection', new LambdaQueryFilter().in('one', 'two', 'three'))
+    .any('myCollection', (lambda) => lambda.in('a', 'b', 'c'))
     .geoDistance('myGeo', [122, 80], GeoComparison.lt, 10)
     .eq('field2', 'foo'))
+  // .filter(`field1 eq 'whatever'`) // use .buildFilter or .filter
   .highlight('field1', 'field2')
   .highlightTag('<b>', '</b>')
   .minimumCoverage(90)
@@ -89,7 +93,8 @@ client.indexes.use('myIndex').search(new QueryBuilder()
   .queryType('simple')
   .skip(0)
   .top(10)
-  .query);
+  // .query // use .query to retrieve the query object or call .executeQuery() to retrieve results
+  .executeQuery();
 ```
 
 > Strongly typed versions of these utilites are also available. See [TypeScript Generics](#typescript-generics)
@@ -134,56 +139,54 @@ client.indexes.use('myIndex').search({
 
 ---
 
-Any resource group with a `list()` function accepts an optional `$select` property to limit the fields that are fetched:
+Any object with a `list()` function accepts an optional `$select` option to limit the fields that are fetched:
 
 ```JavaScript
-client.indexes.list({ $select: 'name' });
+client.indexes.list({ $select: ['name1', 'name2'] });
 ```
 
 ### Response properties
-Every API response has some common properties (not every property is set for every request):
+Every API response has some common properties (not every property is available for every request):
 
 ```JavaScript
 const resp = await client.indexes.use('myIndex').search({
   search: 'hello world',
 });
 
-/*
- * :: response body
- * resp.result
- * 
- * :: current request id
- * resp.properties.requestId
- * 
- * :: time spent by the search engine
- * resp.properties.elapsedTime
- * 
- * :: an identifier specified by the caller in the original request, if present
- * resp.properties.clientRequestId
- * 
- * :: An opaque string representing the current version of a resource (returned for indexers, indexes, and data sources, but not documents). Use this string in the If-Match or If-None-Match header for optimistic concurrency control.
- * resp.properties.eTag
- * 
- * :: The URL of the newly-created index definition for POST and PUT /indexes requests.
- * resp.properties.location
- * 
- * :: HTTP status code of the current request
- * resp.statusCode
- * 
- * :: Local time when the request started
- * resp.timer.start
- * 
- * :: Node 'hrtime' until the first response header arrived
- * resp.timer.response
- * 
- * :: Node 'hrtime' until the full response body is read
- * resp.timer.end
- */
+// response body
+resp.result;
+
+// request id
+resp.properties.requestId;
+
+// time spent by the search engine
+resp.properties.elapsedTime
+
+// an identifier specified by the caller in the original request, if present
+resp.properties.clientRequestId
+
+// An opaque string representing the current version of a resource (returned for indexers, indexes, and data sources, but not documents). Use this string in the If-Match or If-None-Match header for optimistic concurrency control.
+resp.properties.eTag
+
+// The URL of the newly-created index definition for POST and PUT /indexes requests.
+resp.properties.location
+
+// HTTP status code of the current request
+resp.statusCode
+
+// Timestamp when the request started
+resp.timer.start
+
+// Node `hrtime` until the response headers arrived
+resp.timer.response
+
+// Node `hrtime` until the full response body was read
+resp.timer.end
 ```
 
 ## Manage search resources
 
-With an admin key, the search client can the search resources
+With an admin key, the search client can manage the search resources
 
 ### Manage Indexes
 
@@ -244,7 +247,7 @@ await index.suggest({
 });
 ```
 
-> Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates. To disable this, reference the [parseDate option](#options)
+> Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates, returning JavaScript `Date` objects instead. To disable this, use the [parseDate option](#options)
 
 ---
 
@@ -311,7 +314,7 @@ const synonymMap = client.synonymMap.use('mySynonymMap');
 
 ## TypeScript Generics
 
-If you are using TypeScript, this module can support your custom document types (strongly typed documents are always optional).
+If you are using **TypeScript**, this module can support your custom document types (strongly typed documents are optional).
 
 ```TypeScript
 import { SearchService } from 'azure-search-client';
@@ -321,23 +324,24 @@ interface MyDoc {
   num: number;
 }
 
-const resp = await client.indexes.use('myIndex').search<MyDoc>({
+const resp = await client.indexes.use<MyDoc>('myIndex').search({
   search: 'hello',
 });
-
 const doc = resp.result.value[0];
 ```
 
-`doc` is typed as `MyDoc & SearchDocument`, giving you first class access to `id` and `num` properties, as well as `@search.score` and `@search.highlights`.
+`doc` is typed as `MyDoc & SearchDocument`, giving you compile-time access to `id` and `num` properties, as well as `@search.score` and `@search.highlights`.
 
 Use your own Document types wherever documents are used: indexing, search, suggest.
 
+> If you omit the generic parameter, the default document type is `IDocument` which allows for arbitrary document fields.
+
 ---
 
-To ensure type safety when using the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities, switch to their typed equivilents by importing from `'azure-search-client/dist/typed'`. These classes are strongly typed to ensure that field names and values correspond with the actual properties of your document model:
+When using a generic `TDocument` parameter on your `SearchIndex`, type safety also applies to the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities.
 
 ```TypeScript
-import { FacetBuilder, QueryBuilder, QueryFilter  } from 'azure-search-client/dist/typed';
+import { FacetBuilder, QueryBuilder, QueryFilter  } from 'azure-search-client';
 
 interface MyDoc {
   id: string;
@@ -346,20 +350,20 @@ interface MyDoc {
   content: string;
 }
 
-new QueryBuilder<MyDoc>()
+const index = client.use<MyDoc>('myIndex');
+
+const query = index.buildQuery() // or new QueryBuilder<MyDoc>()
     .searchFields('content') // ok
     .facet('num') // ok
 
-    // following will cause compile errors since 'blah' and 'foo' are not part of the document model
-    .facet(new FacetBuilder<MyDoc>('blah').count(100))
+    // these cause compile errors since 'blah' and 'foo' are not part of the document model
+    .buildFacet('blah', (facet) => facet.count(20))
     .select('id', 'foo')
     .highlight('foo')
     .orderbyAsc('foo');
 
-new QueryFilter<MyDoc>()
+const filter = query.buildFilter((filter) => filter // or new QueryFilter<MyDoc>()
   .eq('id', 'foo') // ok
   .lt('date', new Date()) // ok
-  .eq('num', 'not a number'); // compile failure: string is not assignable to number field
+  .eq('num', 'oops, a string'); // compile failure: string is not assignable to number field
 ```
-
-The typed utilities are interchangable with their non-typed counterparts. Use them to catch simple field name typos and assignment errors at compile time.

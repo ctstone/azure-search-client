@@ -61,7 +61,7 @@ export abstract class SearchResourceGroup<TSchema> implements IResourceGroup<TSc
     return this.request<ListResults<TSchema>>({
       method: 'get',
       path: '/',
-      query: options ? { $select: options.$select } : null,
+      query: options ? { $select: options.$select ? options.$select.join(',') : undefined } : undefined,
     }, optionsOrCallback, callback);
   }
 

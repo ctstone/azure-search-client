@@ -24,6 +24,6 @@
     "@types/node": "^10.1.2",
     "@types/superagent": "^3.5.8",
     "tslint": "^5.10.0",
-    "typescript": "^2.8.3"
+    "typescript": "^2.9.2"
   }
 }

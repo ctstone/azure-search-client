@@ -3,7 +3,7 @@ import { IIndexers, Indexers } from './indexers';
 import { IIndexes, Indexes } from './indexes';
 import { SearchRequester } from './search-requester';
 import { ISynonymMaps, SynonymMaps } from './synonym-maps';
-import { AzureSearchResponse, ErrorCallback, RequestCallback, ResponseCallback, SearchOptions, ServiceStatisticsResult, SearchCallback, OptionsOrCallback } from './types';
+import { AzureSearchResponse, ErrorCallback, OptionsOrCallback, RequestCallback, ResponseCallback, SearchCallback, SearchOptions, ServiceStatisticsResult } from './types';
 
 const DEFAULT_VERSION = '2017-11-11';
 

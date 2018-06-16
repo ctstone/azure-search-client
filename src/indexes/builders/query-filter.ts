@@ -1,5 +1,5 @@
 import { LambdaQueryFilter } from './lambda-query-filter';
-import { FieldName } from './query-builder';
+import { FieldName, QueryBuilder } from './query-builder';
 
 enum Logical {
   and = 'and',
@@ -146,8 +146,9 @@ export class QueryFilter<TDocument = any> {
    * @param field index field name
    * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  any<K extends FieldName<TDocument>>(field: K, filter?: LambdaQueryFilter) {
-    this.append(`${field}/any(${LAMBDA_VAR}: ${filter ? filter.toString(LAMBDA_VAR) : ''})`);
+  any<K extends FieldName<TDocument>>(field: K, filter?: (lambda: LambdaQueryFilter) => LambdaQueryFilter): this {
+    const expression = filter ? filter(new LambdaQueryFilter()) : null;
+    this.append(`${field}/any(${LAMBDA_VAR}: ${expression ? expression.toString(LAMBDA_VAR) : ''})`);
     return this;
   }
 
@@ -156,8 +157,9 @@ export class QueryFilter<TDocument = any> {
    * @param field index field name
    * @param filter optional lambda filter. If omitted, the filter will return true if the collection has at least 1 item.
    */
-  all<K extends FieldName<TDocument>>(field: K, filter?: LambdaQueryFilter) {
-    this.append(`${field}/all(${filter ? filter.toString('x') : ''})`);
+  all<K extends FieldName<TDocument>>(field: K, filter?: (lambda: LambdaQueryFilter) => LambdaQueryFilter): this {
+    const expression = filter ? filter(new LambdaQueryFilter()) : null;
+    this.append(`${field}/all(${LAMBDA_VAR}: ${expression ? expression.toString(LAMBDA_VAR) : ''})`);
     return this;
   }
 

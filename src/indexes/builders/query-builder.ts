@@ -19,6 +19,14 @@ export class QueryBuilder<TDocument = any> {
 
   constructor(private index?: ISearchIndex<TDocument>) { }
 
+  buildFilter(build: (builder: QueryFilter<TDocument>) => QueryFilter<TDocument>): this {
+    return this.filter(build(new QueryFilter<TDocument>()));
+  }
+
+  buildFacet(fieldName: FieldName<TDocument>, build: (builder: FacetBuilder<TDocument>) => FacetBuilder<TDocument>): this {
+    return this.facet(build(new FacetBuilder<TDocument>(fieldName)));
+  }
+
   /** Specifies whether to fetch the total count of results  */
   count(enabled = true) {
     this.query.count = enabled;
@@ -26,9 +34,12 @@ export class QueryBuilder<TDocument = any> {
   }
 
   /** A field to facet by (may be called multiple times for multiple fields) */
-  facet<K extends FieldName<TDocument>>(fieldOrExpression: K | FacetBuilder<TDocument>) {
+  facet<K extends FieldName<TDocument>>(...fieldOrExpression: Array<K | FacetBuilder<TDocument>>) {
+    const items = Array.isArray(fieldOrExpression) ? fieldOrExpression : [ fieldOrExpression ];
     this.query.facets = this.query.facets || [];
-    this.query.facets.push(typeof fieldOrExpression === 'string' ? fieldOrExpression as string : fieldOrExpression.toString());
+    items.forEach((x) => {
+      this.query.facets.push(typeof x === 'string' ? x : x.toString());
+    });
     return this;
   }
 
@@ -163,7 +174,7 @@ export class QueryBuilder<TDocument = any> {
    * Execute the search query and return results (must pass an ISearchIndex in the QueryBuilder constructor)
    * @param options optional search options
    */
-  execute(options?: SearchOptions & DocumentParseOptions) {
+  executeQuery(options?: SearchOptions & DocumentParseOptions) {
     if (!this.index) {
       throw new Error('Cannot execute QueryBuilder without an index. Supply an ISearchIndex in the constructor');
     }

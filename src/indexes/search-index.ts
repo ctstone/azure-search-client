@@ -2,7 +2,7 @@ import { jsonParser } from "../parsers";
 import { SearchRequester } from "../search-requester";
 import { ISearchResource, SearchResource } from "../search-resource";
 import { AzureSearchResponse, ListOptions, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
-import { Builder, FacetBuilder, FieldName } from "./builders";
+import { FacetBuilder, FieldName, QueryBuilder } from "./builders";
 import {
   AnalyzeQuery,
   AnalyzeResults,
@@ -56,7 +56,7 @@ interface IndexingBuffer {
  */
 export interface ISearchIndex<TDocument = any> extends ISearchResource<IndexSchema> {
 
-  builder: Builder<TDocument>;
+  buildQuery(): QueryBuilder<TDocument>;
 
   /**
    * Execute a search query
@@ -125,8 +125,6 @@ export interface ISearchIndex<TDocument = any> extends ISearchResource<IndexSche
 
 export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> implements ISearchIndex<TDocument> {
 
-  get builder() { return new Builder<TDocument>(); }
-
   /**
    * Manage Azure Search index resources
    * @param requester http handler
@@ -135,6 +133,10 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> im
    */
   constructor(requester: SearchRequester, type: string, name: string) {
     super(requester, type, name);
+  }
+
+  buildQuery(): QueryBuilder<TDocument> {
+    return new QueryBuilder<TDocument>(this);
   }
 
   search(query: Query, optionsOrCallback?: (SearchOptions & DocumentParseOptions) | SearchCallback<SearchResults<TDocument>>, callback?: SearchCallback<SearchResults<TDocument>>) {

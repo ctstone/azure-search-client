@@ -46,7 +46,7 @@ export interface ListResults<T> {
 }
 
 export interface ListOptions {
-  $select?: string;
+  $select?: string[];
 }
 
 export interface ServiceCounter {
