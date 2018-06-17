@@ -1,12 +1,14 @@
+import { ODataType, ODataOptions } from "../../types";
+
 export interface IndexSchema {
   name?: string;
   fields: FieldSchema[];
   suggesters?: SuggesterSchema[];
   scoringProfiles?: ScoringProfileSchema[];
-  analyzers?: any[];
-  charFilters?: any[];
-  tokenizers?: any[];
-  tokenFilters?: any[];
+  analyzers?: Analyzer[];
+  charFilters?: ODataOptions[];
+  tokenizers?: ODataOptions[];
+  tokenFilters?: ODataOptions[];
   defaultScoringProfile?: string;
   corsOptions?: {
     allowedOrigins: ['*'] | string[];
@@ -70,4 +72,10 @@ export interface DistanceFunctionSchema {
 
 export interface TagFunctionSchema {
   tagsParameter: string;
+}
+
+export interface Analyzer extends ODataType {
+  charFilters: string[];
+  tokenizer: string;
+  tokenFilters: string[];
 }

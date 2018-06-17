@@ -1,4 +1,5 @@
 import * as request from 'superagent';
+import { FieldName } from './indexes';
 
 export interface SearchOptions {
   version?: string;
@@ -71,6 +72,16 @@ export interface ServiceStatisticsResult {
   };
 }
 
+export interface ODataType {
+  name: string;
+  '@odata.type': string;
+}
+
+export interface Options {
+  [option: string]: any;
+}
+
+export type ODataOptions = ODataType & Options;
 export type SearchCallback<T> = (err: Error, resp: AzureSearchResponse<T>) => void;
 export type OptionsOrCallback<T> = SearchOptions | SearchCallback<T>;
 export type ErrorCallback = (err: Error) => void;

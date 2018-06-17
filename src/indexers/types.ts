@@ -1,4 +1,5 @@
 import { IndexingResult } from "../indexes/types";
+import { Options } from "../types";
 
 export interface IndexerSchedule {
   interval: string;
@@ -19,7 +20,7 @@ export interface IndexerFieldMapping {
 
 export interface IndexerMappingFunction {
   name: string;
-  parameters?: { [key: string]: any };
+  parameters?: Options;
 }
 
 export interface IndexerSchema {
