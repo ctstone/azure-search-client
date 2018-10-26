@@ -1,11 +1,11 @@
 # Installation
-```
-npm install azure-search-client
-```
+
+    npm install azure-search-client
 
 ## Usage
 
 ### Basic query (async/await)
+
 Responses may be retrieved using the `async/await` pattern:
 
 ```JavaScript
@@ -19,6 +19,7 @@ console.log(resp.result.value); // array of result docs
 ```
 
 ### Basic query (callback)
+
 Or Responses may be retrieved using the Node callback pattern:
 
 ```JavaScript
@@ -31,6 +32,7 @@ client.indexes.use('myIndex').search({
 ```
 
 ### Full query API
+
 Use the Azure Search POST query representation
 
 > If you are using **TypeScript** see [how to use your own document models](#typescript-generics) on index operations.
@@ -61,6 +63,7 @@ client.indexes.use('myIndex').search({
 ```
 
 ### Query builders
+
 Use `QueryBuilder`, `FilterBuilder`, `FacetBuilder`, and `LambdaQueryFilter` helpers to build a query using method chaining.
 
 ```JavaScript
@@ -100,6 +103,7 @@ client.indexes.use('myIndex')
 > Strongly typed versions of these utilites are also available. See [TypeScript Generics](#typescript-generics)
 
 ### Options
+
 You can set optional request-specific options for any request:
 
 ```JavaScript
@@ -117,7 +121,7 @@ client.indexes.use('myIndex').search({
 });
 ```
 
----
+* * *
 
 You can set the default API version for your client:
 
@@ -125,7 +129,7 @@ You can set the default API version for your client:
 const client = new SearchService('myService', 'myKey', 'myDefaultApiVersion');
 ```
 
----
+* * *
 
 JSON has no date representation, so Azure Search returns `Date` fields as strings. The search client will automatically parse any string value that looks like a date. You can disable automatic date parsing in the request options:
 
@@ -137,7 +141,7 @@ client.indexes.use('myIndex').search({
 });
 ```
 
----
+* * *
 
 Any object with a `list()` function accepts an optional `$select` option to limit the fields that are fetched:
 
@@ -146,6 +150,7 @@ client.indexes.list({ $select: ['name1', 'name2'] });
 ```
 
 ### Response properties
+
 Every API response has some common properties (not every property is available for every request):
 
 ```JavaScript
@@ -208,6 +213,7 @@ await indexes.list();
 ```
 
 ### Manage an index
+
 ```JavaScript
 const index = client.indexes.use('myIndex');
 
@@ -249,7 +255,7 @@ await index.suggest({
 
 > Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates, returning JavaScript `Date` objects instead. To disable this, use the [parseDate option](#options)
 
----
+* * *
 
 ### Manage Data Sources
 
@@ -267,7 +273,7 @@ const dataSource = client.dataSources.use('myDataSource');
 // dataSource => .get, .delete
 ```
 
----
+* * *
 
 ### Manage Indexers
 
@@ -294,7 +300,7 @@ await indexer.run();
 await indexer.status();
 ```
 
----
+* * *
 
 ### Manage Synonym Maps
 
@@ -336,7 +342,7 @@ Use your own Document types wherever documents are used: indexing, search, sugge
 
 > If you omit the generic parameter, the default document type is `IDocument` which allows for arbitrary document fields.
 
----
+* * *
 
 When using a generic `TDocument` parameter on your `SearchIndex`, type safety also applies to the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities.
 

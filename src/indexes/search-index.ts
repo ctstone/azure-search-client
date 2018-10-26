@@ -210,7 +210,7 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> im
         } else if (next.byteLength + comma.byteLength + close.byteLength + buffer.bytes > MAX_INDEXING_BYTES) {
           break;
         } else {
-          if (buffer.position > 0) {
+          if (buffer.count > 0) {
             append(comma);
           }
           append(next);
