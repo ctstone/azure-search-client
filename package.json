@@ -18,11 +18,11 @@
   "author": "chstone@microsoft.com",
   "license": "MIT",
   "dependencies": {
-    "superagent": "^3.8.3"
+    "superagent": "^3.8.3",
+    "@types/superagent": "^3.5.8"
   },
   "devDependencies": {
     "@types/node": "^10.1.2",
-    "@types/superagent": "^3.5.8",
     "tslint": "^5.10.0",
     "typescript": "^2.9.2"
   }
