@@ -18,12 +18,13 @@
   "author": "chstone@microsoft.com",
   "license": "MIT",
   "dependencies": {
-    "superagent": "^3.8.3",
-    "@types/superagent": "^3.5.8"
+    "@types/superagent": "^3.8.5",
+    "azure-search-types": "^1.0.5",
+    "superagent": "^3.8.3"
   },
   "devDependencies": {
-    "@types/node": "^10.1.2",
-    "tslint": "^5.10.0",
+    "@types/node": "^10.12.18",
+    "tslint": "^5.12.0",
     "typescript": "^2.9.2"
   }
 }
