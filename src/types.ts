@@ -1,5 +1,4 @@
 import * as request from 'superagent';
-import { FieldName } from './indexes';
 
 export interface SearchOptions {
   version?: string;
@@ -50,38 +49,6 @@ export interface ListOptions {
   $select?: string[];
 }
 
-export interface ServiceCounter {
-  usage: number;
-  quota: number;
-}
-
-export interface ServiceStatisticsResult {
-  counters: {
-    documentCount: ServiceCounter;
-    indexesCount: ServiceCounter;
-    indexersCount: ServiceCounter;
-    dataSourcesCount: ServiceCounter;
-    storageSize: ServiceCounter;
-    synonymMaps: ServiceCounter;
-  };
-  limits: {
-    maxFieldsPerIndex: number;
-    maxIndexerRunTime: string;
-    maxFileExtractionSize: number;
-    maxFileContentCharactersToExtract: number;
-  };
-}
-
-export interface ODataType {
-  name: string;
-  '@odata.type': string;
-}
-
-export interface Options {
-  [option: string]: any;
-}
-
-export type ODataOptions = ODataType & Options;
 export type SearchCallback<T> = (err: Error, resp: AzureSearchResponse<T>) => void;
 export type OptionsOrCallback<T> = SearchOptions | SearchCallback<T>;
 export type ErrorCallback = (err: Error) => void;

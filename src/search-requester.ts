@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import * as request from 'superagent';
+
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest, SearchTimer } from './types';
 
 const handleError = (err: any) => {

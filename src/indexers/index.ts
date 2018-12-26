@@ -1,17 +1,10 @@
+import { Indexer as IndexerSchema } from 'azure-search-types';
+
 import { SearchRequester } from "../search-requester";
-import { IResourceGroup, SearchResourceGroup } from "../search-resource-group";
-import { IIndexer, Indexer } from "./indexer";
-import { IndexerSchema } from "./types";
+import { SearchResourceGroup } from "../search-resource-group";
+import { Indexer } from "./indexer";
 
 export * from './indexer';
-
-export interface IIndexers extends IResourceGroup<IndexerSchema> {
-  /**
-   * Use a named indexer
-   * @param indexerName name of the indexer
-   */
-  use(indexerName: string): IIndexer;
-}
 
 /**
  * Manage Azure Search indexer resources
@@ -25,6 +18,10 @@ export class Indexers extends SearchResourceGroup<IndexerSchema> {
     super(requester, 'indexers');
   }
 
+  /**
+   * Use a named indexer
+   * @param indexerName name of the indexer
+   */
   use(indexerName: string) {
     return new Indexer(this.requester, this.type, indexerName);
   }

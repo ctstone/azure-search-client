@@ -1,22 +1,15 @@
+import { DataSource as DataSourceSchema } from 'azure-search-types';
+
 import { SearchRequester } from "../search-requester";
-import { IResourceGroup, SearchResourceGroup } from "../search-resource-group";
-import { DataSource, IDataSource } from "./data-source";
-import { DataSourceSchema } from "./types";
+import { SearchResourceGroup } from "../search-resource-group";
+import { DataSource } from "./data-source";
 
 export * from './data-source';
-
-export interface IDataSources extends IResourceGroup<DataSourceSchema> {
-  /**
-   * Use a named data source
-   * @param dataSourceName name of the data source
-   */
-  use(dataSourceName: string): IDataSource;
-}
 
 /**
  * Manage Azure Search data source resources
  */
-export class DataSources extends SearchResourceGroup<DataSourceSchema> implements IDataSources {
+export class DataSources extends SearchResourceGroup<DataSourceSchema> {
   /**
    * Manage Azure Search data source resources
    * @param requester http handler
@@ -25,6 +18,10 @@ export class DataSources extends SearchResourceGroup<DataSourceSchema> implement
     super(requester, 'datasources');
   }
 
+  /**
+   * Use a named data source
+   * @param dataSourceName name of the data source
+   */
   use(dataSourceName: string) {
     return new DataSource(this.requester, this.type, dataSourceName);
   }

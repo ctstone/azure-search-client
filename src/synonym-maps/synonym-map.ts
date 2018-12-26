@@ -1,17 +1,15 @@
+import { SynonymMap as SynonymMapSchema } from 'azure-search-types';
+
 import { SynonymMaps } from ".";
 import { SearchRequester } from "../search-requester";
-import { ISearchResource, SearchResource } from "../search-resource";
-import { SynonymMapSchema } from "./types";
+import { SearchResource } from "../search-resource";
 
 export { SynonymMapSchema };
-
-export interface ISynonymMap extends ISearchResource<SynonymMapSchema> {
-}
 
 /**
  * Manage an Azure Search synonym map resource
  */
-export class SynonymMap extends SearchResource<SynonymMapSchema> implements ISynonymMap {
+export class SynonymMap extends SearchResource<SynonymMapSchema> {
 
   /**
    * Manage an Azure Search synonym map resource

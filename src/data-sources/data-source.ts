@@ -1,16 +1,12 @@
+import { DataSource as DataSourceSchema } from 'azure-search-types';
+
 import { SearchRequester } from '../search-requester';
-import { ISearchResource, SearchResource } from '../search-resource';
-import { DataSourceSchema } from './types';
-
-export { DataSourceSchema };
-
-export interface IDataSource extends ISearchResource<DataSourceSchema> {
-}
+import { SearchResource } from '../search-resource';
 
 /**
  * Manage an Azure Search data source resource
  */
-export class DataSource extends SearchResource<DataSourceSchema> implements IDataSource {
+export class DataSource extends SearchResource<DataSourceSchema> {
 
   /**
    * Manage an Azure Search data source resource

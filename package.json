@@ -1,7 +1,7 @@
 {
   "name": "azure-search-client",
   "description": "Client for Azure Search",
-  "version": "2.2.4",
+  "version": "3.0.0",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/superagent": "^3.8.5",
-    "azure-search-types": "^1.0.5",
+    "azure-search-types": "^1.0.6",
     "superagent": "^3.8.3"
   },
   "devDependencies": {

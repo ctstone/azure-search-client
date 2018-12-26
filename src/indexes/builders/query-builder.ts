@@ -1,6 +1,7 @@
+import { QueryType, SearchMode } from 'azure-search-types';
+
 import { SearchOptions } from '../../types';
-import { ISearchIndex } from '../search-index';
-import { DocumentParseOptions, Query } from '../types/search';
+import { DocumentParseOptions, Query, SearchIndex } from '../search-index';
 import { FacetBuilder } from './facet-builder';
 import { QueryFilter } from './query-filter';
 
@@ -17,7 +18,7 @@ export class QueryBuilder<TDocument = any> {
   /** The current query value */
   readonly query: Query = {};
 
-  constructor(private index?: ISearchIndex<TDocument>) { }
+  constructor(private index?: SearchIndex<TDocument>) { }
 
   buildFilter(build: (builder: QueryFilter<TDocument>) => QueryFilter<TDocument>): this {
     return this.filter(build(new QueryFilter<TDocument>()));
@@ -131,7 +132,7 @@ export class QueryBuilder<TDocument = any> {
   /**
    * Specifies whether any or all of the search terms must be matched in order to count the document as a match (default any)
    */
-  searchMode(mode: 'any' | 'all') {
+  searchMode(mode: SearchMode) {
     this.query.searchMode = mode;
     return this;
   }
@@ -165,7 +166,7 @@ export class QueryBuilder<TDocument = any> {
    * When set to simple, search text is interpreted using a simple query language that allows for symbols such as +, * and "".
    * When the query type is set to full, search text is interpreted using the Lucene query language which allows field-specific and weighted searches.
    */
-  queryType(type: 'simple' | 'full') {
+  queryType(type: QueryType) {
     this.query.queryType = type;
     return this;
   }

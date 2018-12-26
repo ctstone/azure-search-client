@@ -1,36 +1,28 @@
-import { DataSources, IDataSources } from './data-sources';
-import { IIndexers, Indexers } from './indexers';
-import { IIndexes, Indexes } from './indexes';
+import { ServiceStatisticsResult } from 'azure-search-types';
+
+import { DataSources } from './data-sources';
+import { Indexers } from './indexers';
+import { Indexes } from './indexes';
 import { SearchRequester } from './search-requester';
-import { ISynonymMaps, SynonymMaps } from './synonym-maps';
-import { AzureSearchResponse, ErrorCallback, OptionsOrCallback, RequestCallback, ResponseCallback, SearchCallback, SearchOptions, ServiceStatisticsResult } from './types';
+import { SynonymMaps } from './synonym-maps';
+import { AzureSearchResponse, ErrorCallback, OptionsOrCallback, RequestCallback, ResponseCallback, SearchCallback, SearchOptions } from './types';
 
 const DEFAULT_VERSION = '2017-11-11';
 
-export interface ISearchService {
-  /**
-   * Get service level usage statistics
-   * @param options optional request options
-   */
-  statistics(options?: SearchOptions): Promise<AzureSearchResponse<ServiceStatisticsResult>>;
-  statistics(callback: SearchCallback<ServiceStatisticsResult>): void;
-  statistics(options: SearchOptions, callback: SearchCallback<ServiceStatisticsResult>): void;
-}
-
 /** Azure Search service */
-export class SearchService implements ISearchService {
+export class SearchService {
 
   /** Access data sources for the current Azure Search service */
-  dataSources: IDataSources;
+  dataSources: DataSources;
 
   /** Access indexers for the current Azure Search service */
-  indexers: IIndexers;
+  indexers: Indexers;
 
   /** Access indexes for the current Azure Search service */
-  indexes: IIndexes;
+  indexes: Indexes;
 
   /** Access synonym maps for the current Azure Search service */
-  synonymMaps: ISynonymMaps;
+  synonymMaps: SynonymMaps;
 
   private requester: SearchRequester;
 
@@ -66,6 +58,13 @@ export class SearchService implements ISearchService {
     this.requester.events.removeListener(type, listener);
   }
 
+  /**
+   * Get service level usage statistics
+   * @param options optional request options
+   */
+  statistics(options?: SearchOptions): Promise<AzureSearchResponse<ServiceStatisticsResult>>;
+  statistics(callback: SearchCallback<ServiceStatisticsResult>): void;
+  statistics(options: SearchOptions, callback: SearchCallback<ServiceStatisticsResult>): void;
   statistics(optionsOrCallback?: OptionsOrCallback<ServiceStatisticsResult>, callback?: SearchCallback<ServiceStatisticsResult>) {
     return this.requester.request<ServiceStatisticsResult>({
       method: 'get',

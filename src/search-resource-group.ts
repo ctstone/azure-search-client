@@ -1,39 +1,10 @@
 import { SearchRequester } from './search-requester';
 import { AzureSearchResponse, ListOptions, ListResults, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
-export interface IResourceGroup<TSchema> {
-
-  /**
-   * Create a new resource
-   * @param schema resource definition
-   * @param options optional request options
-   */
-  create(schema: TSchema, options?: SearchOptions): Promise<AzureSearchResponse<void>>;
-  create(schema: TSchema, callback: SearchCallback<void>): void;
-  create(schema: TSchema, options: SearchOptions, callback: SearchCallback<void>): void;
-
-  /**
-   * Update a resource
-   * @param schema resource definition
-   * @param options optional request options
-   */
-  update(schema: TSchema, options?: SearchOptions): Promise<AzureSearchResponse<void>>;
-  update(schema: TSchema, callback: SearchCallback<void>): void;
-  update(schema: TSchema, options: SearchOptions, callback: SearchCallback<void>): void;
-
-  /**
-   * List all resources
-   * @param options optional request options
-   */
-  list(options?: SearchOptions & ListOptions): Promise<AzureSearchResponse<ListResults<TSchema>>>;
-  list(callback: SearchCallback<ListResults<TSchema>>): void;
-  list(options: SearchOptions & ListOptions, callback: SearchCallback<ListResults<TSchema>>): void;
-}
-
 /**
  * Base class for search resource groups
  */
-export abstract class SearchResourceGroup<TSchema> implements IResourceGroup<TSchema> {
+export abstract class SearchResourceGroup<TSchema> {
 
   /**
    * Create new instance of the search resource group
@@ -44,6 +15,14 @@ export abstract class SearchResourceGroup<TSchema> implements IResourceGroup<TSc
   constructor(protected requester: SearchRequester, protected type: string) {
   }
 
+  /**
+   * Create a new resource
+   * @param schema resource definition
+   * @param options optional request options
+   */
+  create(schema: TSchema, options?: SearchOptions): Promise<AzureSearchResponse<void>>;
+  create(schema: TSchema, callback: SearchCallback<void>): void;
+  create(schema: TSchema, options: SearchOptions, callback: SearchCallback<void>): void;
   create(schema: TSchema, optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
     return this.request<void>({
       method: 'post',
@@ -52,10 +31,13 @@ export abstract class SearchResourceGroup<TSchema> implements IResourceGroup<TSc
     }, optionsOrCallback, callback);
   }
 
-  update(schema: TSchema, optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
-    return this.create(schema, optionsOrCallback, callback);
-  }
-
+  /**
+   * List all resources
+   * @param options optional request options
+   */
+  list(options?: SearchOptions & ListOptions): Promise<AzureSearchResponse<ListResults<TSchema>>>;
+  list(callback: SearchCallback<ListResults<TSchema>>): void;
+  list(options: SearchOptions & ListOptions, callback: SearchCallback<ListResults<TSchema>>): void;
   list(optionsOrCallback?: (SearchOptions & ListOptions) | SearchCallback<ListResults<TSchema>>, callback?: SearchCallback<ListResults<TSchema>>) {
     const options: SearchOptions & ListOptions = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback;
     return this.request<ListResults<TSchema>>({
