@@ -1,0 +1,79 @@
+variables:
+  buildArtifactName: Build
+
+trigger:
+  - master
+
+jobs:
+
+  # Job 1: Build
+  - job: Build
+    pool:
+      vmImage: ubuntu-16.04
+    steps:
+
+      # Install Nodejs
+      - task: NodeTool@0
+        inputs:
+          versionSpec: 10.x
+
+      # Build the package
+      - script: |
+          set -e
+          npm install
+          npm run build
+
+      # Copy the build
+      - task: CopyFiles@2
+        inputs:
+          contents: |
+            **/*
+            !.git/**
+            !node_modules/**
+          targetFolder: $(Build.ArtifactStagingDirectory)
+      
+      # Publish the build
+      - task: PublishPipelineArtifact@0
+        inputs:
+          artifactName: $(buildArtifactName)
+          targetPath: $(Build.ArtifactStagingDirectory)
+  
+  # Job 2: Publish NPM
+  - job: Publish
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+    pool:
+      vmImage: ubuntu-16.04
+    steps:
+
+      - checkout: self
+        persistCredentials: true
+
+      # Install Nodejs
+      - task: NodeTool@0
+        inputs:
+          versionSpec: 10.x
+      
+      # Increment the package version
+      - script: |
+          set -e
+          npm --no-git-tag-version version patch
+          git config user.name CI
+          git config user.email chstone@microsoft.com
+          git pull origin HEAD:$(Build.SourceBranch)
+          git add package*.json
+          git commit -m "bump package.json ***NO_CI***"
+          git push origin HEAD:$(Build.SourceBranch)
+
+      # Download the build
+      - task: DownloadPipelineArtifact@0
+        inputs:
+          artifactName: $(buildArtifactName)
+          targetPath: $(Build.ArtifactStagingDirectory)/$(buildArtifactName)
+
+      # Publish the package
+      - task: Npm@1
+        inputs:
+          command: publish
+          workingDir: $(Build.ArtifactStagingDirectory)/$(buildArtifactName)
+          publishEndpoint: npm-ctstone
