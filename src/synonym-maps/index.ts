@@ -19,7 +19,7 @@ export class SynonymMaps extends SearchResourceGroup<SynonymMapSchema> {
 
   /**
    * Use a named synonym map
-   * @param indexName name of the synonym map
+   * @param synonymMapName name of the synonym map
    */
   use(synonymMapName: string) {
     return new SynonymMap(this.requester, this.type, synonymMapName);

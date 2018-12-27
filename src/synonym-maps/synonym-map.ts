@@ -1,6 +1,5 @@
 import { SynonymMap as SynonymMapSchema } from 'azure-search-types';
 
-import { SynonymMaps } from ".";
 import { SearchRequester } from "../search-requester";
 import { SearchResource } from "../search-resource";
 

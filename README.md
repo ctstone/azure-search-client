@@ -385,7 +385,7 @@ await index.suggest({
 ```js
 const dataSources = client.dataSources;
 
-// dataSources => .create, .update, .list
+// dataSources => .create, .list
 ```
 
 ### Manage a Data Source
@@ -403,7 +403,7 @@ const dataSource = client.dataSources.use('myDataSource');
 ```js
 const indexers = client.indexers;
 
-// indexers => .create, .update, .list
+// indexers => .create, .list
 ```
 
 ### Manage an Indexer
@@ -430,15 +430,37 @@ await indexer.status();
 ```js
 const synonymMaps = client.synonymMaps;
 
-// synonymMaps => .create, .update, .list
+// synonymMaps => .create, .list
 ```
 
 ### Manage a Synonym Map
 
 ```js
-const synonymMap = client.synonymMap.use('mySynonymMap');
+const synonymMap = client.synonymMaps.use('mySynonymMap');
 
 // synonymMap => .get, .delete
+```
+
+* * *
+
+### Manage Skill Sets
+
+> SkillSets are currently in preview, so be sure to use `ApiVersion.preview` in the `SearchService` constructor.
+> 
+> When referencing a skill type, input name, or output name, be sure to use the corresponding `enum` value rather than a plain string value.
+
+```js
+const skillSets = client.skillSets;
+
+// skillSets => .create, .list
+```
+
+### Manage a Skill Set
+
+```js
+const skillSet = client.skillSets.use('mySkillSet');
+
+// skillSet => .get, .delete
 ```
 
 ## TypeScript Generics
