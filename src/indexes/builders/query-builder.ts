@@ -2,8 +2,8 @@ import { QueryType, SearchMode } from 'azure-search-types';
 
 import { SearchOptions } from '../../types';
 import { DocumentParseOptions, Query, SearchIndex } from '../search-index';
-import { FacetBuilder } from './facet-builder';
-import { QueryFilter } from './query-filter';
+import { QueryFacet } from './query-facet';
+import { Logical, QueryFilter } from './query-filter';
 
 export type FieldName<TDocument> = Extract<keyof TDocument, string>;
 
@@ -20,22 +20,19 @@ export class QueryBuilder<TDocument = any> {
 
   constructor(private index?: SearchIndex<TDocument>) { }
 
-  buildFilter(build: (builder: QueryFilter<TDocument>) => QueryFilter<TDocument>): this {
-    return this.filter(build(new QueryFilter<TDocument>()));
-  }
-
-  buildFacet(fieldName: FieldName<TDocument>, build: (builder: FacetBuilder<TDocument>) => FacetBuilder<TDocument>): this {
-    return this.facet(build(new FacetBuilder<TDocument>(fieldName)));
-  }
-
   /** Specifies whether to fetch the total count of results  */
   count(enabled = true) {
     this.query.count = enabled;
     return this;
   }
 
+  /** Build a facet expression */
+  buildFacet(fieldName: FieldName<TDocument>, build: (builder: QueryFacet<TDocument>) => QueryFacet<TDocument>): this {
+    return this.facet(build(new QueryFacet<TDocument>(fieldName)));
+  }
+
   /** A field to facet by (may be called multiple times for multiple fields) */
-  facet<K extends FieldName<TDocument>>(...fieldOrExpression: Array<K | FacetBuilder<TDocument>>) {
+  facet<K extends FieldName<TDocument>>(...fieldOrExpression: Array<K | QueryFacet<TDocument>>) {
     const items = Array.isArray(fieldOrExpression) ? fieldOrExpression : [ fieldOrExpression ];
     this.query.facets = this.query.facets || [];
     items.forEach((x) => {
@@ -44,10 +41,37 @@ export class QueryBuilder<TDocument = any> {
     return this;
   }
 
-  /** A structured search expression in standard OData syntax */
-  filter(filter: string | QueryFilter<TDocument>) {
-    this.query.filter = typeof filter === 'string' ? filter : filter.toString();
+  /** Use a complex facet expression string */
+  facetExpression(...expressions: string[]) {
+    expressions.forEach((x) => {
+      this.query.facets.push(x);
+    });
     return this;
+  }
+
+  /** A structured search expression in standard OData syntax (logical 'and') */
+  filter(filter: string | QueryFilter<TDocument> | ((builder: QueryFilter<TDocument>) => QueryFilter<TDocument>)): this {
+    switch (typeof filter) {
+      case 'function':
+        return this.filter(filter(new QueryFilter<TDocument>()));
+      case 'object':
+        return this.filter(filter.toString());
+      case 'string':
+        this.query.filter = filter;
+        return this;
+      default:
+        throw new Error('Unsupported filter');
+    }
+  }
+
+  /** Build a query using logical 'or' */
+  filterOr(filter: (builder: QueryFilter<TDocument>) => QueryFilter<TDocument>) {
+    return this.filter(filter(new QueryFilter<TDocument>(Logical.or)));
+  }
+
+  /** Build a query using logical 'not' */
+  filterNot(filter: (builder: QueryFilter<TDocument>) => QueryFilter<TDocument>) {
+    return this.filter(filter(new QueryFilter<TDocument>(Logical.not)));
   }
 
   /** Set fields used for hit highlighting */

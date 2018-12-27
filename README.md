@@ -1,4 +1,4 @@
-# Installation
+# Azure Search Client
 
     npm install azure-search-client
 
@@ -6,12 +6,12 @@
 
 ### Basic query (async/await)
 
-Responses may be retrieved using the `async/await` pattern:
+Use the `async/await` pattern:
 
 ```JavaScript
 const { SearchService } = require('azure-search-client');
 
-const client = new SearchService('myService', 'myKey');
+const client = new SearchService('myservice', 'mykey');
 const resp = await client.indexes.use('myIndex').search({
   search: 'hello world',
 });
@@ -20,7 +20,7 @@ console.log(resp.result.value); // array of result docs
 
 ### Basic query (callback)
 
-Or Responses may be retrieved using the Node callback pattern:
+Or use the Node `callback` pattern:
 
 ```JavaScript
 client.indexes.use('myIndex').search({
@@ -31,9 +31,9 @@ client.indexes.use('myIndex').search({
 });
 ```
 
-### Full query API
+### Query API
 
-Use the Azure Search POST query representation
+Use the Azure Search [POST query representation](https://docs.microsoft.com/en-us/rest/api/searchservice/search-documents#request)
 
 > If you are using **TypeScript** see [how to use your own document models](#typescript-generics) on index operations.
 
@@ -54,61 +54,187 @@ client.indexes.use('myIndex').search({
   ],
   search: 'hello world',
   searchFields: 'field1, field2',
-  searchMode: 'any',
+  searchMode: SearchMode.any,
   select: 'field1, field2',
-  queryType: 'simple',
+  queryType: QueryType.simple,
   skip: 0,
   top: 10,
 });
 ```
 
-### Query builders
+## Query builders
 
-Use `QueryBuilder`, `FilterBuilder`, `FacetBuilder`, and `LambdaQueryFilter` helpers to build a query using method chaining.
+Use `QueryBuilder`, `QueryFilter`, `QueryFacet`, and `LambdaQueryFilter` helpers to build a query using method chaining.
+
+Build a simple query:
 
 ```JavaScript
-client.indexes.use('myIndex')
+await client.indexes.use('myIndex')
   .buildQuery()
   .count(true)
-  .buildFacet('field1', (facet) => facet
-    .count(20)
-    .sortByValue('desc'))
-  .facet('field2', 'field3', new FacetBuilder('field4').count(20)) // can combine .buildFacet with .facet
-  .buildFilter((filter) => filter
-    .eq('field1', 123)
-    .any('myCollection', (lambda) => lambda.in('a', 'b', 'c'))
-    .geoDistance('myGeo', [122, 80], GeoComparison.lt, 10)
-    .eq('field2', 'foo'))
-  // .filter(`field1 eq 'whatever'`) // use .buildFilter or .filter
-  .highlight('field1', 'field2')
-  .highlightTag('<b>', '</b>')
-  .minimumCoverage(90)
-  .orderbyAsc('field1')
-  .orderByGeoDistance('geoField', [122, 80])
-  .orderByScore()
-  .scoringProfile('myProfile')
-  .scoringParameter('currentLocation', '-122.123', '44.77233')
-  .scoringParameter('lastLocation', '-121.499', '44.2113')
-  .search('hello world')
-  .searchFields('field1', 'field2')
-  .searchMode('any')
-  .select('field1', 'field2')
-  .queryType('simple')
-  .skip(0)
-  .top(10)
-  // .query // use .query to retrieve the query object or call .executeQuery() to retrieve results
+  .search('some search query')
+  .top(20)
   .executeQuery();
 ```
 
-> Strongly typed versions of these utilites are also available. See [TypeScript Generics](#typescript-generics)
+Build a query with facets:
 
-### Options
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .buildFacet('myFacetField1', (f) => f.count(20).sortByValue('desc'))
+  .buildFacet('myFacetField2', (f) => f.interval('day'))
+  .executeQuery();
+```
+
+There are multiple ways to specify facets (combine them as needed):
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .facet('myFacetField1', 'myFacetField2') // simple facet parameters
+  .buildFacet('myFacetField3', (f) => f.count(20).sortByValue('desc')) // callback builder
+  .facet(new QueryFacet('myFacetField4').count(20)) // constructor builder
+  .facetExpression('myFacetField5,count:5,interval:100', 'myFacetField6,count10') // raw expression strings
+  .executeQuery();
+```
+
+Build an `and` filtered query:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filter((f) => f.eq('myField1', 123).ne('myField2', 'foo')) // by default, filters are chained with 'and' operator
+  .executeQuery();
+```
+
+Build an `or` filtered query:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filterOr((f) => f.eq('myField1', 123).ne('myField1', 456)) // chain filters with the 'or' operator
+  .executeQuery();
+```
+
+Build a `not` filtered query:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filterNot((f) => f.eq('myField1', 123).ne('myField1', 456)) // chain filters with the 'or' operator
+  .executeQuery();
+```
+
+Filter on `geoDistance`:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filter((f) => f.geoDistance('myGeoField', [122, 80], GeoComparison.lt, 10)) // find documents less than 10km from the point at (122, 80)
+  .executeQuery();
+```
+
+Filter on a string collection:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filter((f) => f.any('myField1', (x) => x.eq('foo'))) // find documents where any member of 'myField1' is 'foo'
+  .executeQuery();
+```
+
+Build an arbitrarily complex filter graph:
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filter(QueryFilter.and(
+    QueryFilter.or(
+      new QueryFilter().eq('field1', 123).eq('field2', 456),
+      new QueryFilter().eq('field1', 999),
+    ),
+    new QueryFilter(Logical.not).eq('field3', 'foo'),
+  ))
+  .executeQuery();
+```
+
+Specify filter as a raw string expression
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .filter(`myField1 eq 123 and myField2/any(x: x eq 'foo')`)
+  .executeQuery();
+```
+
+Escape user input when using [Lucene query syntax](https://docs.microsoft.com/en-us/rest/api/searchservice/lucene-query-syntax-in-azure-search).
+
+```JavaScript
+await client.indexes.use('myIndex')
+  .buildQuery()
+  .queryType(QueryType.full)
+  .search(QueryBuilder.escape('Find at&t documents')) // => "find at\&t documents"
+  .executeQuery();
+```
+
+> All of the query builders support [TypeScript Generics](#typescript-generics).
+
+## Indexing API
+
+`azure-search-client` automatically batches indexing operations up to 1000 documents or 16 MB, whichever is lower. Use either the fully buffered API (promise/callback based) or the streaming API, depending on your needs.
+
+### Fully buffered indexing API
+
+Index documents using promise `async`/`await`
+
+```JavaScript
+const docs = getDocuments(); // arbitrarily large array of document objects
+const results = await client.indexes.use('myIndex')
+  .index(docs);
+```
+
+Or using a callback
+
+```JavaScript
+const docs = getDocuments(); // arbitrarily large array of document objects
+client.indexes.use('myIndex')
+  .index(docs, (err, results) => {
+    if (err) { throw err; }
+  });
+```
+
+### Streaming indexing API
+
+When it is impractical to fully buffer an indexing payload, consider using the streaming API to pipe document objects into the index as fast as they can be read (while still buffering batches up to the Azure Search payload limits). This technique works best with streaming object sources like `csv-parse` and `json-stream`.
+
+> The Node [pipeline](https://nodejs.org/docs/latest-v10.x/api/stream.html#stream_stream_pipeline_streams_callback) API was introduced in Node.js 10.x. For use on older versions, consider using the [.pipe()](https://nodejs.org/docs/latest-v8.x/api/stream.html#stream_readable_pipe_destination_options) API.
+
+```JavaScript
+const { pipeline } = require('stream');
+const csvParse = require('csv-parse'); // nmm i csv-parse
+
+pipeline(
+  createReadStream('./data.csv'),
+  csvParse({ columns: ['key', 'title', 'body']}), // Must specify columns. If your csv contains a header row, skip it using 'from' csv option.
+  search.indexes.use('myIndex').createIndexingStream(),
+  (err) => {
+    if (err) {
+      console.error('Indexing failed');
+    } else {
+      console.log('Indexing complete');
+    }
+  }
+)
+```
+
+## Request Options
 
 You can set optional request-specific options for any request:
 
 ```JavaScript
 client.indexes.use('myIndex').search({
-  search: 'hello',
+  search: 'some search query',
 }, {
   version: 'thisRequestApiVersion',
   key: 'thisRequestKey',
@@ -131,7 +257,7 @@ const client = new SearchService('myService', 'myKey', 'myDefaultApiVersion');
 
 * * *
 
-JSON has no date representation, so Azure Search returns `Date` fields as strings. The search client will automatically parse any string value that looks like a date. You can disable automatic date parsing in the request options:
+JSON has no date representation, so Azure Search returns `Date` fields as strings. The search client will automatically parse any string value that looks like a date, but you can disable date parsing in the request options:
 
 ```JavaScript
 client.indexes.use('myIndex').search({
@@ -146,7 +272,7 @@ client.indexes.use('myIndex').search({
 Any object with a `list()` function accepts an optional `$select` option to limit the fields that are fetched:
 
 ```JavaScript
-client.indexes.list({ $select: ['name1', 'name2'] });
+client.indexes.list({ $select: ['name', 'fields'] });
 ```
 
 ### Response properties
@@ -203,11 +329,6 @@ await indexes.create({
   /* IndexSchema */
 });
 
-// UPDATE INDEX
-await indexes.update({
-  /* IndexSchema */
-});
-
 // LIST INDEXES
 await indexes.list();
 ```
@@ -253,7 +374,7 @@ await index.suggest({
 });
 ```
 
-> Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates, returning JavaScript `Date` objects instead. To disable this, use the [parseDate option](#options)
+> Note: `search`, `suggest`, and `lookup` APIs will automatically parse document fields that look like Dates, returning JavaScript `Date` objects instead. To disable this, use the [parseDate option](#request-options)
 
 * * *
 
@@ -320,7 +441,9 @@ const synonymMap = client.synonymMap.use('mySynonymMap');
 
 ## TypeScript Generics
 
-If you are using **TypeScript**, this module can support your custom document types (strongly typed documents are optional).
+If you are using **TypeScript**, `azure-search-client` has full support for your custom document types
+
+> Strongly typed documents are optional and default to `Document`, which allows for arbitrary document fields.
 
 ```TypeScript
 import { SearchService } from 'azure-search-client';
@@ -340,14 +463,12 @@ const doc = resp.result.value[0];
 
 Use your own Document types wherever documents are used: indexing, search, suggest.
 
-> If you omit the generic parameter, the default document type is `IDocument` which allows for arbitrary document fields.
-
 * * *
 
-When using a generic `TDocument` parameter on your `SearchIndex`, type safety also applies to the `QueryBuilder`, `QueryFilter`, and `FacetBuilder` utilities.
+When using a generic `TDocument` parameter on your `SearchIndex`, type safety also applies to the `QueryBuilder`, `QueryFilter`, and `QueryFacet` utilities.
 
 ```TypeScript
-import { FacetBuilder, QueryBuilder, QueryFilter  } from 'azure-search-client';
+import { QueryFacet, QueryBuilder, QueryFilter  } from 'azure-search-client';
 
 interface MyDoc {
   id: string;
@@ -362,7 +483,7 @@ const query = index.buildQuery() // or new QueryBuilder<MyDoc>()
     .searchFields('content') // ok
     .facet('num') // ok
 
-    // these cause compile errors since 'blah' and 'foo' are not part of the document model
+    // compile errors since 'blah' and 'foo' are not part of the document model
     .buildFacet('blah', (facet) => facet.count(20))
     .select('id', 'foo')
     .highlight('foo')

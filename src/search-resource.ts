@@ -12,7 +12,7 @@ export abstract class SearchResource<T> {
    * @param type the type of resource (should match /{resource}/ in the REST url path)
    * @param name the name of the current resource (should match /{resource}/{name} in the REST url path)
    */
-  constructor(private requester: SearchRequester, private type: string, public name: string) { }
+  constructor(protected requester: SearchRequester, private type: string, public name: string) { }
 
   /**
    * Get the current schema

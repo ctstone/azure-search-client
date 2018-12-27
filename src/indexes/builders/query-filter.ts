@@ -1,7 +1,7 @@
 import { LambdaQueryFilter } from './lambda-query-filter';
 import { FieldName, QueryBuilder } from './query-builder';
 
-enum Logical {
+export enum Logical {
   and = 'and',
   or = 'or',
   not = 'not',
@@ -54,8 +54,9 @@ export class QueryFilter<TDocument = any> {
     return qf;
   }
 
-  private mode = Logical.and;
   private expressions: Array<Expression<TDocument>> = [];
+
+  constructor(private mode = Logical.and) { }
 
   /** append a new filter to this query using a logical AND */
   and(...filters: Array<QueryFilter<TDocument>>): this {

@@ -15,10 +15,13 @@ import {
 } from 'azure-search-types';
 
 import { jsonParser } from "../parsers";
+import { promiseOrCallback } from '../promise-or-callback';
 import { SearchRequester } from "../search-requester";
 import { SearchResource } from "../search-resource";
 import { AzureSearchResponse, ListOptions, OptionsOrCallback, SearchCallback, SearchOptions } from '../types';
-import { FacetBuilder, FieldName, QueryBuilder } from "./builders";
+import { FieldName, QueryBuilder, QueryFacet } from "./builders";
+import { IndexBuffer } from './index-buffer';
+import { IndexStream } from './index-stream';
 
 export {
   IndexSchema,
@@ -48,18 +51,12 @@ export interface SuggestResponse<T> extends AzureSearchResponse<SuggestResults<T
 export interface SearchResponse<T> extends AzureSearchResponse<SearchResults<T>> {
 }
 
+export type IndexingCallback = (err?: Error, results?: IndexingResult[]) => void;
+export type OptionsOrIndexingCallback = SearchOptions | IndexingCallback;
+
 export * from 'azure-search-types/dist/indexes/search';
 
-const MAX_INDEXING_BYTES = 16 * Math.pow(2, 20);
-const MAX_INDEXING_COUNT = 1000;
 const RE_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
-
-interface IndexingBuffer {
-  data: Buffer[];
-  bytes: number;
-  position: number;
-  count: number;
-}
 
 export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> {
 
@@ -150,56 +147,40 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> {
    * @param documents documents to index
    * @param options optional request options
    */
-  async index(documents: Array<IndexDocument & TDocument>, options?: SearchOptions) {
-    const buffer: IndexingBuffer = { data: [], bytes: 0, position: 0, count: 0 };
-    const comma = Buffer.from(',');
-    const open = Buffer.from('{"value":[');
-    const close = Buffer.from(']}');
-    const append = (buf: Buffer) => {
-      buffer.data.push(buf);
-      buffer.bytes += buf.byteLength;
-    };
-    const reset = () => {
-      buffer.data.length = 0;
-      buffer.bytes = 0;
-      buffer.count = 0;
-      append(open);
-    };
+  index(documents: Array<IndexDocument & TDocument>, options?: SearchOptions): Promise<IndexingResult[]>;
+  index(documents: Array<IndexDocument & TDocument>, callback: IndexingCallback): void;
+  index(documents: Array<IndexDocument & TDocument>, options: SearchOptions, callback: IndexingCallback): void;
+  async index(documents: Array<IndexDocument & TDocument>, optionsOrCallback?: OptionsOrIndexingCallback, callback?: IndexingCallback) {
 
-    let results: IndexingResult[] = [];
+    const options = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback;
+    const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    const results: IndexingResult[] = [];
 
-    do {
-      reset();
-      while (buffer.position < documents.length && buffer.count < MAX_INDEXING_COUNT) {
-        const next = Buffer.from(JSON.stringify(documents[buffer.position]));
-        if (next.byteLength > MAX_INDEXING_BYTES) {
-          throw new Error(`Document at position ${buffer.position} contains ${next.byteLength} bytes, which exceeds maximum of ${MAX_INDEXING_BYTES}`);
-        } else if (next.byteLength + comma.byteLength + close.byteLength + buffer.bytes > MAX_INDEXING_BYTES) {
-          break;
-        } else {
-          if (buffer.count > 0) {
-            append(comma);
-          }
-          append(next);
-          buffer.position += 1;
-          buffer.count += 1;
-        }
+    return await promiseOrCallback(async () => {
+      const buffer = new IndexBuffer(async (data) => {
+        const resp = await this.request<IndexingResults>({
+          method: 'post',
+          path: '/docs/index',
+          headers: { 'content-type': 'application/json' },
+          body: data,
+        }, options);
+        resp.result.value.forEach((x) => results.push(x));
+      });
+      for (const document of documents) {
+        await buffer.add(document);
       }
-      append(close);
-      const data = Buffer.concat(buffer.data);
-      const resp = await this.request<IndexingResults>({
-        method: 'post',
-        path: '/docs/index',
-        headers: { 'content-type': 'application/json' },
-        body: data,
-      }, options);
-      results = results.concat(resp.result.value);
-    } while (buffer.position < documents.length);
-
-    return results;
+      await buffer.flush();
+      return results;
+    }, cb);
   }
 
-  // TODO implement callback style index()?
+  /**
+   * Create a indexing stream suitable for piping in document objects
+   * @param options optional request options
+   */
+  createIndexingStream(options?: SearchOptions) {
+    return new IndexStream(this.requester, this.name, options);
+  }
 
   /**
    * Get document count and usage for the current index
@@ -259,8 +240,8 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> {
   /**
    * Create a new FacetBuilder for this index
    */
-  facet(field: FieldName<TDocument>): FacetBuilder<TDocument>;
+  facet(field: FieldName<TDocument>): QueryFacet<TDocument>;
   facet(field: FieldName<TDocument>) {
-    return new FacetBuilder<TDocument>(field);
+    return new QueryFacet<TDocument>(field);
   }
 }
