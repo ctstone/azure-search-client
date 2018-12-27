@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/superagent": "^3.8.5",
-    "azure-search-types": "^1.0.6",
+    "azure-search-types": "^1.0.7",
     "superagent": "^3.8.3"
   },
   "devDependencies": {
