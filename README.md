@@ -1,5 +1,7 @@
 # Azure Search Client
 
+[![Build Status](https://dev.azure.com/ctstone/stonedev/_apis/build/status/ctstone.azure-search-client?branchName=master)](https://dev.azure.com/ctstone/stonedev/_build/latest?definitionId=2?branchName=master)
+
     npm install azure-search-client
 
 ## Usage
