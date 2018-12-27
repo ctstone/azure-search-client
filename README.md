@@ -10,7 +10,7 @@
 
 Use the `async/await` pattern:
 
-```JavaScript
+```js
 const { SearchService } = require('azure-search-client');
 
 const client = new SearchService('myservice', 'mykey');
@@ -24,7 +24,7 @@ console.log(resp.result.value); // array of result docs
 
 Or use the Node `callback` pattern:
 
-```JavaScript
+```js
 client.indexes.use('myIndex').search({
   search: 'hello world',
 }, (err, resp) => {
@@ -39,7 +39,7 @@ Use the Azure Search [POST query representation](https://docs.microsoft.com/en-u
 
 > If you are using **TypeScript** see [how to use your own document models](#typescript-generics) on index operations.
 
-```JavaScript
+```js
 client.indexes.use('myIndex').search({
   count: true,
   facets: ['field1', 'field2'],
@@ -70,7 +70,7 @@ Use `QueryBuilder`, `QueryFilter`, `QueryFacet`, and `LambdaQueryFilter` helpers
 
 Build a simple query:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .count(true)
@@ -81,7 +81,7 @@ await client.indexes.use('myIndex')
 
 Build a query with facets:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .buildFacet('myFacetField1', (f) => f.count(20).sortByValue('desc'))
@@ -91,7 +91,7 @@ await client.indexes.use('myIndex')
 
 There are multiple ways to specify facets (combine them as needed):
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .facet('myFacetField1', 'myFacetField2') // simple facet parameters
@@ -103,7 +103,7 @@ await client.indexes.use('myIndex')
 
 Build an `and` filtered query:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filter((f) => f.eq('myField1', 123).ne('myField2', 'foo')) // by default, filters are chained with 'and' operator
@@ -112,7 +112,7 @@ await client.indexes.use('myIndex')
 
 Build an `or` filtered query:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filterOr((f) => f.eq('myField1', 123).ne('myField1', 456)) // chain filters with the 'or' operator
@@ -121,7 +121,7 @@ await client.indexes.use('myIndex')
 
 Build a `not` filtered query:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filterNot((f) => f.eq('myField1', 123).ne('myField1', 456)) // chain filters with the 'or' operator
@@ -130,7 +130,7 @@ await client.indexes.use('myIndex')
 
 Filter on `geoDistance`:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filter((f) => f.geoDistance('myGeoField', [122, 80], GeoComparison.lt, 10)) // find documents less than 10km from the point at (122, 80)
@@ -139,7 +139,7 @@ await client.indexes.use('myIndex')
 
 Filter on a string collection:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filter((f) => f.any('myField1', (x) => x.eq('foo'))) // find documents where any member of 'myField1' is 'foo'
@@ -148,7 +148,7 @@ await client.indexes.use('myIndex')
 
 Build an arbitrarily complex filter graph:
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filter(QueryFilter.and(
@@ -163,7 +163,7 @@ await client.indexes.use('myIndex')
 
 Specify filter as a raw string expression
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .filter(`myField1 eq 123 and myField2/any(x: x eq 'foo')`)
@@ -172,7 +172,7 @@ await client.indexes.use('myIndex')
 
 Escape user input when using [Lucene query syntax](https://docs.microsoft.com/en-us/rest/api/searchservice/lucene-query-syntax-in-azure-search).
 
-```JavaScript
+```js
 await client.indexes.use('myIndex')
   .buildQuery()
   .queryType(QueryType.full)
@@ -190,7 +190,7 @@ await client.indexes.use('myIndex')
 
 Index documents using promise `async`/`await`
 
-```JavaScript
+```js
 const docs = getDocuments(); // arbitrarily large array of document objects
 const results = await client.indexes.use('myIndex')
   .index(docs);
@@ -198,7 +198,7 @@ const results = await client.indexes.use('myIndex')
 
 Or using a callback
 
-```JavaScript
+```js
 const docs = getDocuments(); // arbitrarily large array of document objects
 client.indexes.use('myIndex')
   .index(docs, (err, results) => {
@@ -212,7 +212,7 @@ When it is impractical to fully buffer an indexing payload, consider using the s
 
 > The Node [pipeline](https://nodejs.org/docs/latest-v10.x/api/stream.html#stream_stream_pipeline_streams_callback) API was introduced in Node.js 10.x. For use on older versions, consider using the [.pipe()](https://nodejs.org/docs/latest-v8.x/api/stream.html#stream_readable_pipe_destination_options) API.
 
-```JavaScript
+```js
 const { pipeline } = require('stream');
 const csvParse = require('csv-parse'); // nmm i csv-parse
 
@@ -234,7 +234,7 @@ pipeline(
 
 You can set optional request-specific options for any request:
 
-```JavaScript
+```js
 client.indexes.use('myIndex').search({
   search: 'some search query',
 }, {
@@ -253,7 +253,7 @@ client.indexes.use('myIndex').search({
 
 You can set the default API version for your client:
 
-```JavaScript
+```js
 const client = new SearchService('myService', 'myKey', 'myDefaultApiVersion');
 ```
 
@@ -261,7 +261,7 @@ const client = new SearchService('myService', 'myKey', 'myDefaultApiVersion');
 
 JSON has no date representation, so Azure Search returns `Date` fields as strings. The search client will automatically parse any string value that looks like a date, but you can disable date parsing in the request options:
 
-```JavaScript
+```js
 client.indexes.use('myIndex').search({
   search: 'hello world',
 }, {
@@ -273,7 +273,7 @@ client.indexes.use('myIndex').search({
 
 Any object with a `list()` function accepts an optional `$select` option to limit the fields that are fetched:
 
-```JavaScript
+```js
 client.indexes.list({ $select: ['name', 'fields'] });
 ```
 
@@ -281,7 +281,7 @@ client.indexes.list({ $select: ['name', 'fields'] });
 
 Every API response has some common properties (not every property is available for every request):
 
-```JavaScript
+```js
 const resp = await client.indexes.use('myIndex').search({
   search: 'hello world',
 });
@@ -323,7 +323,7 @@ With an admin key, the search client can manage the search resources
 
 ### Manage Indexes
 
-```JavaScript
+```js
 const indexes = client.indexes;
 
 // CREATE INDEX
@@ -337,7 +337,7 @@ await indexes.list();
 
 ### Manage an index
 
-```JavaScript
+```js
 const index = client.indexes.use('myIndex');
 
 // ANALYZE TEXT
@@ -382,7 +382,7 @@ await index.suggest({
 
 ### Manage Data Sources
 
-```JavaScript
+```js
 const dataSources = client.dataSources;
 
 // dataSources => .create, .update, .list
@@ -390,7 +390,7 @@ const dataSources = client.dataSources;
 
 ### Manage a Data Source
 
-```JavaScript
+```js
 const dataSource = client.dataSources.use('myDataSource');
 
 // dataSource => .get, .delete
@@ -400,7 +400,7 @@ const dataSource = client.dataSources.use('myDataSource');
 
 ### Manage Indexers
 
-```JavaScript
+```js
 const indexers = client.indexers;
 
 // indexers => .create, .update, .list
@@ -408,7 +408,7 @@ const indexers = client.indexers;
 
 ### Manage an Indexer
 
-```JavaScript
+```js
 const indexer = client.indexers.use('myIndexer');
 
 // indexer => .get, .delete
@@ -427,7 +427,7 @@ await indexer.status();
 
 ### Manage Synonym Maps
 
-```JavaScript
+```js
 const synonymMaps = client.synonymMaps;
 
 // synonymMaps => .create, .update, .list
@@ -435,7 +435,7 @@ const synonymMaps = client.synonymMaps;
 
 ### Manage a Synonym Map
 
-```JavaScript
+```js
 const synonymMap = client.synonymMap.use('mySynonymMap');
 
 // synonymMap => .get, .delete
