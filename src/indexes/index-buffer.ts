@@ -40,7 +40,7 @@ export class IndexBuffer<TDocument = Document> {
 
   async flush() {
     if (this.count) {
-      console.log(`Flushing ${this.count} documents`);
+      // console.log(`Flushing ${this.count} documents`);
       this.chunk(CLOSE);
       await this.flushHandler(Buffer.concat(this.chunks));
       this.reset();

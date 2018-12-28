@@ -1,5 +1,10 @@
 # Change Log
 
+## v3.0.5
+
+- Add `SearchError` class to propagate errors
+- Fix error parsing for non-JSON responses
+
 ## v3.0.4
 
 - Add support for Skill Sets
