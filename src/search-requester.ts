@@ -1,22 +1,28 @@
 import { EventEmitter } from 'events';
+import { Response, ResponseError as SuperAgentResponseError, serialize, SuperAgentRequest } from 'superagent';
 import * as request from 'superagent';
 
+import { ResponseError } from './response-error';
+import { SearchError } from './search-error';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest, SearchTimer } from './types';
 
-const handleError = (err: any) => {
-  if (err.response && err.response.body) {
-    const body = err.response.body;
-    const url = err.response.request.url;
-    const method = err.response.request.method.toUpperCase();
-    const status = err.response.status;
-    if (body.error && body.error.message) {
-      throw new Error(`Cannot ${method} ${url} (${status}): ${body.error.message}`);
-    }
+const handleError = (err: any, req: SuperAgentRequest) => {
+
+  if (err instanceof ResponseError) {
+    throw new SearchError(req.method, req.url, err.statusCode, err.message);
+  } else if (err instanceof SearchError) {
+    throw err;
+  } else if (err.response) {
+    const response: Response = err.response;
+    const body = response.body;
+    const message = body && body.error && body.error.message ? body.error.message : 'Unknown Error';
+    throw new SearchError(req.method, req.url, response.status, message);
+  } else {
+    throw new SearchError(req.method, req.url, -1, err.message || 'Unknown Error', err);
   }
-  throw err;
 };
 
-const handleResponse = <T>(resp: request.Response, timer: SearchTimer): AzureSearchResponse<T> => {
+const handleResponse = <T>(resp: Response, timer: SearchTimer): AzureSearchResponse<T> => {
   return {
     result: resp.body as T,
     properties: {
@@ -31,19 +37,22 @@ const handleResponse = <T>(resp: request.Response, timer: SearchTimer): AzureSea
   };
 };
 
-const handlePromise = <T>(req: request.SuperAgentRequest, timer: SearchTimer) => {
-  return req
-    .then((resp) => handleResponse<T>(resp, timer))
-    .catch(handleError);
+const handlePromise = async <T>(req: SuperAgentRequest, timer: SearchTimer) => {
+  try {
+    const resp = await req;
+    return handleResponse<T>(resp, timer);
+  } catch (err) {
+    return handleError(err, req);
+  }
 };
 
-const handleCallback = <T>(req: request.SuperAgentRequest, callback: (err: Error, resp: AzureSearchResponse<T>) => void, timer: SearchTimer) => {
+const handleCallback = <T>(req: SuperAgentRequest, callback: (err: Error, resp: AzureSearchResponse<T>) => void, timer: SearchTimer) => {
   req.end((err, resp) => {
     let error: Error;
     let searchResp: AzureSearchResponse<T>;
     if (err) {
       try {
-        handleError(err);
+        handleError(err, req);
       } catch (err) {
         error = err;
       }
@@ -54,7 +63,7 @@ const handleCallback = <T>(req: request.SuperAgentRequest, callback: (err: Error
   });
 };
 
-request.serialize['application/json'] = (obj) => {
+serialize['application/json'] = (obj) => {
   return Buffer.isBuffer(obj) ? obj as any : JSON.stringify(obj);
 };
 
@@ -71,7 +80,6 @@ export class SearchRequester {
 
   request<T>(req: SearchRequest<T>, optionsOrCallback?: OptionsOrCallback<T>, callback?: SearchCallback<T>): Promise<AzureSearchResponse<T>> {
     const [options, cb] = this.getParams(optionsOrCallback, callback);
-    const events = this.events;
     const headers = Object.assign({
       'api-key': options && options.key ? options.key : this.adminKeys[0],
       'if-match': options && options.ifMatch ? options.ifMatch : null,
@@ -83,7 +91,7 @@ export class SearchRequester {
       'api-version': options && options.version ? options.version : this.defaultVersion,
     }, req.query);
     const timer: SearchTimer = { start: new Date(), response: process.hrtime(), end: process.hrtime() };
-    const val = request(req.method, this.endpoint + req.path)
+    const requestValue = request(req.method, this.endpoint + req.path)
       .set(headers)
       .query(query)
       .send(req.body)
@@ -106,9 +114,9 @@ export class SearchRequester {
     this.events.emit('request', { request: req, options });
 
     if (cb) {
-      handleCallback<T>(val, cb, timer);
+      handleCallback<T>(requestValue, cb, timer);
     } else {
-      return handlePromise<T>(val, timer);
+      return handlePromise<T>(requestValue, timer);
     }
   }
 
