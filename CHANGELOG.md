@@ -1,5 +1,9 @@
 # Change Log
 
+## v3.0.6
+
+- Fix streaming error for `createIndexingStream`
+
 ## v3.0.5
 
 - Add `SearchError` class to propagate errors

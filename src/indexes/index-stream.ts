@@ -14,9 +14,7 @@ export class IndexStream extends Transform {
       headers: { 'content-type': 'application/json' },
       body: data,
     });
-    for (const result of resp.result.value) {
-      this.push(result);
-    }
+    // TODO: pass IndexingResults as the stream transform
   });
 
   constructor(private requester: SearchRequester, private index: string, private options?: SearchOptions) {
