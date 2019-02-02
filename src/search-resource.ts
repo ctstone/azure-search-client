@@ -1,10 +1,18 @@
 import { SearchRequester } from './search-requester';
 import { AzureSearchResponse, OptionsOrCallback, SearchCallback, SearchOptions, SearchRequest } from './types';
 
+interface Named {
+  name: string;
+}
+
+interface OptionalName<T> {
+  name?: string;
+}
+
 /**
  * Base class for search resources
  */
-export abstract class SearchResource<T> {
+export abstract class SearchResource<T extends Named> {
 
   /**
    * Create new instance of the search resource
@@ -39,6 +47,22 @@ export abstract class SearchResource<T> {
     return this.request<void>({
       method: 'delete',
       path: '/',
+    }, optionsOrCallback, callback);
+  }
+
+  /**
+   * Update or create this resource
+   * @param resource new definition
+   * @param options optional request options
+   */
+  update(resource: OptionalName<T>, options?: SearchOptions): Promise<AzureSearchResponse<void>>;
+  update(resource: OptionalName<T>, callback: SearchCallback<void>): void;
+  update(resource: OptionalName<T>, options: SearchOptions, callback: SearchCallback<void>): void;
+  update(resource: OptionalName<T>, optionsOrCallback?: OptionsOrCallback<void>, callback?: SearchCallback<void>) {
+    return this.request<void>({
+      method: 'put',
+      path: '/',
+      body: resource,
     }, optionsOrCallback, callback);
   }
 

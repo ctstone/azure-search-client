@@ -1,5 +1,9 @@
 # Change Log
 
+## v3.1.2
+
+- Add support for updating search resources
+
 ## v3.1.1
 
 - Pass indexing batch results downstream for `index.createIndexingStream()`
