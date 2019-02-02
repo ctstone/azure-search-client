@@ -1,5 +1,10 @@
 # Change Log
 
+## v3.1.1
+
+- Pass indexing batch results downstream for `index.createIndexingStream()`
+- Add parameter to process indexing batch results for `index.index(...)`
+
 ## v3.0.6
 
 - Fix streaming error for `createIndexingStream`

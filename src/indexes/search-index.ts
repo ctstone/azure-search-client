@@ -32,6 +32,7 @@ export {
   SearchResults,
   SuggestResults,
   AnalyzeResults,
+  IndexingResult,
   IndexingResults,
   IndexStatistics,
   IDocument,
@@ -51,8 +52,9 @@ export interface SuggestResponse<T> extends AzureSearchResponse<SuggestResults<T
 export interface SearchResponse<T> extends AzureSearchResponse<SearchResults<T>> {
 }
 
-export type IndexingCallback = (err?: Error, results?: IndexingResult[]) => void;
-export type OptionsOrIndexingCallback = SearchOptions | IndexingCallback;
+export type OptionsOrBatchIndexedCallback = SearchOptions | IndexedCallback;
+export type IndexedCallback = (err?: Error, count?: number) => PromiseLike<void>;
+export type BatchIndexed = (results?: IndexingResult[]) => PromiseLike<void>;
 
 export * from 'azure-search-types/dist/indexes/search';
 
@@ -147,14 +149,45 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> {
    * @param documents documents to index
    * @param options optional request options
    */
-  index(documents: Array<IndexDocument & TDocument>, options?: SearchOptions): Promise<IndexingResult[]>;
-  index(documents: Array<IndexDocument & TDocument>, callback: IndexingCallback): void;
-  index(documents: Array<IndexDocument & TDocument>, options: SearchOptions, callback: IndexingCallback): void;
-  async index(documents: Array<IndexDocument & TDocument>, optionsOrCallback?: OptionsOrIndexingCallback, callback?: IndexingCallback) {
+  index(documents: Array<IndexDocument & TDocument>, batchIndexed?: BatchIndexed, options?: SearchOptions): Promise<number>;
+  index(documents: Array<IndexDocument & TDocument>, callback: IndexedCallback): void;
+  index(documents: Array<IndexDocument & TDocument>, batchIndexed: BatchIndexed, callback: IndexedCallback): void;
+  index(documents: Array<IndexDocument & TDocument>, batchIndexed: BatchIndexed, options: SearchOptions, callback: IndexedCallback): void;
+  async index(
+    documents: Array<IndexDocument & TDocument>,
+    optionsOrCallback1?: IndexedCallback | BatchIndexed,
+    optionsOrCallback2?: OptionsOrBatchIndexedCallback,
+    callback?: IndexedCallback) {
 
-    const options = typeof optionsOrCallback === 'function' ? {} : optionsOrCallback;
-    const cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    const results: IndexingResult[] = [];
+    let options: SearchOptions;
+    let batchIndexed: BatchIndexed;
+    let cb: IndexedCallback;
+    let count = 0;
+
+    // full callback overload
+    if (typeof callback === 'function') {
+      options = optionsOrCallback2 as SearchOptions;
+      batchIndexed = null;
+      cb = callback;
+
+    // callback overload without options
+    } else if (typeof optionsOrCallback2 === 'function') {
+      options = { };
+      batchIndexed = optionsOrCallback1 as BatchIndexed;
+      cb = optionsOrCallback2;
+
+    // callback overload without options or batchIndexed
+    } else if (typeof optionsOrCallback1 === 'function') {
+      options = { };
+      batchIndexed = null;
+      cb = optionsOrCallback1 as IndexedCallback;
+
+    // promise overload
+    } else {
+      options = optionsOrCallback2;
+      batchIndexed = optionsOrCallback1;
+      cb = null;
+    }
 
     return await promiseOrCallback(async () => {
       const buffer = new IndexBuffer(async (data) => {
@@ -164,18 +197,24 @@ export class SearchIndex<TDocument = any> extends SearchResource<IndexSchema> {
           headers: { 'content-type': 'application/json' },
           body: data,
         }, options);
-        resp.result.value.forEach((x) => results.push(x));
+        if (batchIndexed) {
+          await batchIndexed(resp.result.value);
+        }
+        count += resp.result.value.length;
+        return resp.result.value;
       });
       for (const document of documents) {
         await buffer.add(document);
       }
       await buffer.flush();
-      return results;
+      return count;
     }, cb);
   }
 
   /**
-   * Create a indexing stream suitable for piping in document objects
+   * Create a indexing stream suitable for piping in document objects.
+   * Emits a 'data' event for every batch of documents that is indexed.
+   * @param batchIndexed optional callback when a batch has been indexed
    * @param options optional request options
    */
   createIndexingStream(options?: SearchOptions) {

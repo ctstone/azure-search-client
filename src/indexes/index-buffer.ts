@@ -1,4 +1,4 @@
-import { Document, IndexDocument } from 'azure-search-types';
+import { Document, IndexDocument, IndexingResult } from 'azure-search-types';
 
 const MAX_INDEXING_BYTES = 16 * Math.pow(2, 20);
 const MAX_INDEXING_COUNT = 1000;
@@ -6,7 +6,7 @@ const COMMA = Buffer.from(',');
 const OPEN = Buffer.from('{"value":[');
 const CLOSE = Buffer.from(']}');
 
-export type FlushCallback = (data: Buffer) => Promise<void>;
+export type FlushCallback = (data: Buffer) => Promise<IndexingResult[]>;
 
 export class IndexBuffer<TDocument = Document> {
 
@@ -16,7 +16,7 @@ export class IndexBuffer<TDocument = Document> {
 
   constructor(private flushHandler: FlushCallback) { }
 
-  async add(document: IndexDocument & TDocument) {
+  add(document: IndexDocument & TDocument) {
     if (!this.count) {
       this.chunk(OPEN);
     }
@@ -24,7 +24,7 @@ export class IndexBuffer<TDocument = Document> {
     if (next.byteLength > MAX_INDEXING_BYTES) {
       throw new Error(`Document #${this.count} contains ${next.byteLength} bytes, which exceeds maximum of ${MAX_INDEXING_BYTES}`);
     } else if (next.byteLength + COMMA.byteLength + CLOSE.byteLength + this.bytes > MAX_INDEXING_BYTES) {
-      await this.flush();
+      return this.flush();
     } else {
       if (this.count > 0) {
         this.chunk(COMMA);
@@ -34,16 +34,16 @@ export class IndexBuffer<TDocument = Document> {
     }
 
     if (this.count >= MAX_INDEXING_COUNT) {
-      await this.flush();
+      return this.flush();
     }
   }
 
-  async flush() {
+  flush() {
     if (this.count) {
-      // console.log(`Flushing ${this.count} documents`);
       this.chunk(CLOSE);
-      await this.flushHandler(Buffer.concat(this.chunks));
+      const data = Buffer.concat(this.chunks);
       this.reset();
+      return this.flushHandler(data);
     }
   }
 
