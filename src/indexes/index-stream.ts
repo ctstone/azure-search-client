@@ -22,11 +22,19 @@ export class IndexStream extends Transform {
       objectMode: true,
       async transform(chunk, enc, cb) {
         // await promiseOrCallback(() => self.buffer.add(chunk), cb);
-        await self.process(cb, chunk);
+        try {
+          await self.process(cb, chunk);
+        } catch (err) {
+          cb(err);
+        }
       },
       async flush(cb) {
         // await promiseOrCallback(() => self.buffer.flush(), cb);
-        await self.process(cb);
+        try {
+          await self.process(cb);
+        } catch (err) {
+          cb(err);
+        }
       },
     });
 
