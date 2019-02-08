@@ -20,22 +20,8 @@ export class IndexStream extends Transform {
   constructor(private requester: SearchRequester, private index: string, private options?: SearchOptions) {
     super({
       objectMode: true,
-      async transform(chunk, enc, cb) {
-        // await promiseOrCallback(() => self.buffer.add(chunk), cb);
-        try {
-          await self.process(cb, chunk);
-        } catch (err) {
-          cb(err);
-        }
-      },
-      async flush(cb) {
-        // await promiseOrCallback(() => self.buffer.flush(), cb);
-        try {
-          await self.process(cb);
-        } catch (err) {
-          cb(err);
-        }
-      },
+      transform: async (chunk, enc, cb) => await self.process(cb, chunk),
+      flush: async (cb) => await self.process(cb),
     });
 
     const self = this;
@@ -47,8 +33,9 @@ export class IndexStream extends Transform {
   }
 
   private async process(cb: TransformCallback, document?: IndexDocument & Document) {
-    let maybeResults: IndexingResult[];
+    let maybeResults: void | IndexingResult[];
     let error: any = null;
+
     try {
       maybeResults = document
         ? await this.buffer.add(document)

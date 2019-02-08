@@ -16,7 +16,7 @@ export class IndexBuffer<TDocument = Document> {
 
   constructor(private flushHandler: FlushCallback) { }
 
-  add(document: IndexDocument & TDocument) {
+  add(document: IndexDocument & TDocument): Promise<void | IndexingResult[]> {
     if (!this.count) {
       this.chunk(OPEN);
     }
@@ -35,6 +35,8 @@ export class IndexBuffer<TDocument = Document> {
 
     if (this.count >= MAX_INDEXING_COUNT) {
       return this.flush();
+    } else {
+      return Promise.resolve();
     }
   }
 

@@ -15,7 +15,20 @@ const handleError = (err: any, req: SuperAgentRequest) => {
   } else if (err.response) {
     const response: Response = err.response;
     const body = response.body;
-    const message = body && body.error && body.error.message ? body.error.message : 'Unknown Error';
+    let message: string;
+    if (body && body.error && body.error.message) {
+      message = body.error.message;
+    } else if (body && body.Message) {
+      message = body.Message;
+    } else if (typeof body === 'string') {
+      message = body;
+    } else if (typeof body === 'object') {
+      message = JSON.stringify(body);
+    } else if (body) {
+      message = body.toString();
+    } else {
+      message = 'Unknown search request error';
+    }
     throw new SearchError(req.method, req.url, response.status, message);
   } else {
     throw new SearchError(req.method, req.url, -1, err.message || 'Unknown Error', err);
