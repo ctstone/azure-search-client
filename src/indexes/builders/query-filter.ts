@@ -20,8 +20,6 @@ type Expression<TDocument> = string | QueryFilter<TDocument>;
 
 const LAMBDA_VAR = 'x';
 
-export type Scalar = string | number | boolean | Date;
-
 export enum GeoComparison {
   gt = 'gt',
   lt = 'lt',

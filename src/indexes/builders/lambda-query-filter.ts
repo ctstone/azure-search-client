@@ -15,6 +15,8 @@ enum Logical {
 
 type Expression = ((token: string) => string) | LambdaQueryFilter;
 
+export type Scalar = string | number | boolean | Date;
+
 export class LambdaQueryFilter {
 
   /** join multiple filters together with a logical NOT */
@@ -58,32 +60,32 @@ export class LambdaQueryFilter {
   }
 
   /** apply the equals operator */
-  eq(value: string) {
+  eq(value: Scalar) {
     return this.compare(Comparison.eq, value);
   }
 
   /** apply the not-equal operator */
-  ne(value: string) {
+  ne(value: Scalar) {
     return this.compare(Comparison.ne, value);
   }
 
   /** apply the greater-than operator */
-  gt(value: string) {
+  gt(value: Scalar) {
     return this.compare(Comparison.gt, value);
   }
 
   /** apply the less-than operator */
-  lt(value: string) {
+  lt(value: Scalar) {
     return this.compare(Comparison.lt, value);
   }
 
   /** apply the greater-than-or-equal-to operator */
-  ge(value: string) {
+  ge(value: Scalar) {
     return this.compare(Comparison.ge, value);
   }
 
   /** apply the less-than-or-equal-to operator */
-  le(value: string) {
+  le(value: Scalar) {
     return this.compare(Comparison.le, value);
   }
 
@@ -105,12 +107,17 @@ export class LambdaQueryFilter {
     return ops.length ? ops.join(this.isUnary() ? ' ' : ` ${this.mode} `) : '';
   }
 
-  private compare(op: Comparison, value: string) {
+  private compare(op: Comparison, value: Scalar) {
     return this.append((x) => `${x} ${op} ${this.prepValue(value)}`);
   }
 
-  private prepValue(value: string) {
-    return `'${value.replace(`'`, `\\'`)}'`;
+  private prepValue(value: Scalar) {
+    if (typeof value === 'string') {
+      value = `'${value.replace(`'`, `\\'`)}'` as any;
+    } else if (value instanceof Date) {
+      value = value.toISOString() as any;
+    }
+    return value;
   }
 
   private append(expression: Expression) {
