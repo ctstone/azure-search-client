@@ -138,7 +138,7 @@ export class SearchRequester {
   // Grab the url of the proxy server to use with superagent-proxy
   private getProxyUri(options: SearchOptions): string {
     // Look for a proxy url in the environment. Fall back to an empty string (no proxy) if not found
-    const envProxy = process.env.http_proxy || process.env.http_proxyHTTP_PROXY || '';
+    const envProxy = process.env.http_proxy || process.env.HTTP_PROXY || '';
 
     if(options && options.proxy) return options.proxy;
     else return envProxy;
