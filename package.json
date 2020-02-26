@@ -20,10 +20,12 @@
   "dependencies": {
     "@types/superagent": "^3.8.5",
     "azure-search-types": "^1.0.10",
-    "superagent": "^3.8.3"
+    "superagent": "^3.8.3",
+    "superagent-proxy": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^10.12.18",
+    "@types/superagent-proxy": "^2.0.0",
     "tslint": "^5.12.0",
     "typescript": "^3.2.2"
   }
