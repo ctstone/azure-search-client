@@ -1,6 +1,7 @@
 import * as request from 'superagent';
 
 export interface SearchOptions {
+  proxy?: string;
   version?: string;
   key?: string;
   retry?: number;

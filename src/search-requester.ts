@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { Response, ResponseError as SuperAgentResponseError, serialize, SuperAgentRequest } from 'superagent';
 import * as request from 'superagent';
+require('superagent-proxy')(request);
 
 import { ResponseError } from './response-error';
 import { SearchError } from './search-error';
@@ -105,6 +106,7 @@ export class SearchRequester {
     }, req.query);
     const timer: SearchTimer = { start: new Date(), response: process.hrtime(), end: process.hrtime() };
     const requestValue = request(req.method, this.endpoint + req.path)
+      .proxy(this.getProxyUri(options))
       .set(headers)
       .query(query)
       .send(req.body)
@@ -131,6 +133,15 @@ export class SearchRequester {
     } else {
       return handlePromise<T>(requestValue, timer);
     }
+  }
+
+  // Grab the url of the proxy server to use with superagent-proxy
+  private getProxyUri(options: SearchOptions): string {
+    // Look for a proxy url in the environment. Fall back to an empty string (no proxy) if not found
+    const envProxy = process.env.http_proxy || process.env.HTTP_PROXY || '';
+
+    if(options && options.proxy) return options.proxy;
+    else return envProxy;
   }
 
   private getParams<T>(optionsOrCallback?: SearchOptions | SearchCallback<T>, callback?: SearchCallback<T>): [SearchOptions, SearchCallback<T>] {
